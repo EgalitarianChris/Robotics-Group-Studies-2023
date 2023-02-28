@@ -1,292 +1,179 @@
-import pymunk
-import numpy as np
+# Import relevent libraries
+from Sim import setup_simulation, perform_action, get_action
+from effort_parameter import get_effort
 import pygame
-
-def angle(x1, x2, y1, y2, theta=0, phi=0):
-    'angle between two points, can take away other angles to make it relative to other component'
-    return np.arctan2(x2 -x1, y2 - y1) - theta - phi
-
-def CoM(x1, x2, y1, y2, m1, m2):
-    'center of mass'
-    return ((m1*x1 + m2*x2)/2, (m1*y1 + m2*y2)/2)
+import numpy as np
+import gym
+from gym import spaces
+from pymunk.pygame_util import DrawOptions
+from stable_baselines3.common.env_checker import check_env
+from stable_baselines3 import PPO
 
 
-class Rod:
-    def __init__(self, pos, a, b, m, space, radius=4):
-        'position of CoM, start, end, mass, radius(width)'
-        self.body = pymunk.Body()
-        self.body.position = pos
-        self.radius = radius
-        self.a = a
-        self.b = b
-        self.body.center_of_gravity = (0,0)
-        self.shape = pymunk.Segment(self.body, self.a, self.b, radius)
-        self.shape.mass = m
-        self.shape.elasticity = 0
-        self.shape.filter = pymunk.ShapeFilter(group=1)
-        self.shape.color = (0, 255, 0, 0)
-        space.add(self.body, self.shape)
+# Create gym environment - Contains the machine learning code and the simulation code:
+class CustomEnv(gym.Env):
 
-class Leg:
-    def __init__(self, pos, a1, b1, a2, b2, m1, m2, space, radius=3):
-        'position of CoM, leg_start, leg_end, foot_start, foot_end,'
-        ' leg_mass,  foot_mass, radius(width)'
-        self.body = pymunk.Body()
-        self.body.position = pos
-        self.radius = radius
-        self.a1 = a1
-        self.b1 = b1
-        self.a2 = a2
-        self.b2 = b2
-        self.body.center_of_gravity = (0,0)#needs calculation
-        self.leg = pymunk.Segment(self.body, self.a1, self.b1, radius)
-        self.leg.filter = pymunk.ShapeFilter(group = 1)
-        self.leg.color = (0, 255, 0, 0)
-        self.leg.mass = m1
-        self.foot= pymunk.Segment(self.body, self.a2, self.b2, radius=radius)
-        self.foot.filter = pymunk.ShapeFilter(group = 1)
-        self.leg.mass = m2
-        self.foot.color = (0, 255, 0, 0)
-        space.add(self.body, self.leg, self.foot)
+    # Initialising the environment - SINGLE SETUP FUNCTION CALL to be written by simulations team:
+    def __init__(self, env_config={}):
+        self.run_duration = 10000
+        self.run_time = 0
+        self.reward = 0
+        self.step_length = 1 / 1000
+        self.observation = np.zeros(12)
+        self.last_action = np.array([0,0,0,0])
+        a = self.step_length*1000
 
-class Rotarylimitjoint:
-    'stops swing moving out of control area i think'
-    def __init__(self, b, b2, min, max, space, collide=True):
-        joint = pymunk.constraints.RotaryLimitJoint(b, b2, min, max)
-        joint.collide_bodies = collide
-        space.add(joint)
+        self.action_space = spaces.Box(np.array([-a, -5*a, -a, -5*a]), np.array([a, 5*a, a, 5*a]), dtype=float)
+        self.observation_space = spaces.Box(np.array([-np.pi, -np.pi, -np.pi, -np.pi, -10, -10, -10, -10]), np.array([np.pi, np.pi, np.pi, np.pi, 10, 10, 10, 10]), dtype=np.float32)
 
-class Simplemotor:
-    'is added and removed at diffrent points to move a joint at a constant speed'
-    def __init__(self, body1, body2, rate, space, switch="off"):
-        'rate is angular velocity in radians'
-        self.rate = rate
-        self.body1 = body1
-        self.body2 = body2
-        self.simplemotor = pymunk.SimpleMotor(self.body1, self.body2, self.rate)
-        space.add(self.simplemotor)
+        self.simulation_data = setup_simulation()
 
-class Pinjoint:
-    def __init__(self, body1, body2, con1, con2, space):
-        'two bodies and where to connect them by on each body'
-        joint = pymunk.constraints.PinJoint(body1, body2, con1, con2)
-        space.add(joint)
+    # The actual bit where the simulation happens
+    def step(self, action=np.zeros((4), dtype=np.single)):
+        action =+ self.last_action
+        if action[0] >= 90:
+            action[0] = 90
+        if action[0] <= -45:
+            action[0] = -45
+        if action[1] >= 360:
+            action[1] = 360
+        if action[1] <= 0:
+            action[1] = 0
+        if action[2] >= 128:
+            action[2] = 128
+        if action[2] <= 63:
+            action[2] = 63
+        if action[3] >= 360:
+            action[3] = 360
+        if action[3] <= 0:
+            action[3] = 0
+        self.simulation_data = perform_action(self, action, self.simulation_data)
+        self.last_action = action
+        self.simulation_data["pm_space"].step(self.step_length) # might want to include a bit of random variation to the step duration to help train the agent for running on NAO
 
-class Swing:
-    def __init__(self,pos, a1, b1, a2, b2, a3, b3, a4, b4, m1, m2, m3, m4, space):
-        'position of CoM, a=start, b=end, m=mass, 1/2/3=bar/vertical/base'
-        self.body = pymunk.Body()
-        self.body.position = pos
-        s1 = pymunk.Segment(self.body, a1, b1 , radius=2) #bar
-        s1.filter = pymunk.ShapeFilter(group = 1)
-        s1.mass = m1
-        s2 = pymunk.Segment(self.body, a2, b2, radius=3)#vertical
-        s2.filter = pymunk.ShapeFilter(group = 1)
-        s2.mass = m2
-        s3 = pymunk.Segment(self.body, a3, b3, radius=2)#base
-        s3.filter = pymunk.ShapeFilter(group = 1)
-        s3.mass = m3
-        s4 = pymunk.Segment(self.body, a4, b4, radius=3)#upper leg
-        s4.filter = pymunk.ShapeFilter(group = 1)
-        s4.mass = m4
-        s4.color = (0, 255, 0, 0)
-        space.add(self.body, s1,s2,s3,s4)
+        observation = self.get_obs()
 
-class Torso:
-    def __init__(self, pos, a1, b1, r2, a2, m1, m2, space):
-        'position of CoM, a1= torso start, b1=torso end, r2=head radius, a2=head offset, m=mass'
-        self.body = pymunk.Body()
-        self.body.position = pos
-        self.a1 = a1
-        self.b1 = b1
-        self.body.center_of_gravity = (0,0)
-        self.torso = pymunk.Segment(self.body, self.a1, self.b1 , radius=3)
-        self.torso.filter = pymunk.ShapeFilter(group = 1)
-        self.torso.mass = m1
-        self.torso.color = (255, 0, 0, 0)
-        self.head = pymunk.Circle(self.body, r2, a2)
-        self.head.mass = m2
-        self.head.filter = pymunk.ShapeFilter(group = 1)
-        self.head.color = (255, 0, 0, 0)
-        space.add(self.body, self.torso, self.head)
+        self.reward += self.get_reward(observation)
+        info = self.get_info()
+        done = self.quit_timer()
+        self.observation = observation
+        return observation, self.reward, done, info
 
-#----------------------------------------------------------------------------------------------------------------------
-# FUNCTIONS FOR USE IN THE GYM ENVIRONMENT (PREVIOUSLY WITHIN GYM WITH SIM):
+    # Initialise the renderer (NOT RELEVENT TO SIMULATIONS)
+    def init_render(self):
+        pygame.init()
+        self.window = pygame.display.set_mode((1000, 500))
+        self.simulation_data["pm_space"].gravity = 0, 981
+        self.options = DrawOptions(self.window)
+        self.clock = pygame.time.Clock()
 
-def setup_simulation():
-    pm_space = pymunk.Space()
-    pm_space.gravity = 0, 981
-    background = pm_space.static_body
-    speeds = [0, 0]
+    # Render the state of the simulation (NOT RELEVENT TO SIMULATIONS)
+    def render(self):
+        get_events()
+        self.window.fill((255, 255, 255))
+        self.simulation_data["pm_space"].debug_draw(self.options)
+        pygame.display.update()
 
-    setup = {
-        # lengths /cm - innacurate
-        "rl": 151 + 7,
-        "sl1": 16,
-        "sl2": 19 + 5,
-        "sl3": 17,
-        "sl4": [8,10],
-        "ll1": 16,
-        "ll2": 6,
-        "tl": 18.5,
-        "a1": 10,
-        "a2": 10,
-        "a3": 30,
+    # Reset the simulation for the next training run (NOT RELEVENT TO SIMULATIONS)
+    def reset(self):
+        self.run_time = 0
+        self.reward = 0
+        self.simulation_data = setup_simulation()
+        observation = self.get_obs()
+        return observation
 
-        "bg": (400, 200),
+    def get_obs(self):
+        leg_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angle -self.simulation_data["pm_space"].bodies[1].angle)
+        leg_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
+        # leg_angle_acc = (leg_angle_velocity - self.observation[4]) / self.step_length
 
-        # masses /kg
-        "rm": 1.235 + 0.381 / 2,
-        "sm1": 0.381 / 2,
-        "sm2": 1.026,
-        "sm3": 0.131 * 2 + 0.070 + 0.390 * 2,
-        "sm4": 0.5,
-        "lm1": 0.292 * 2 + 0.134,
-        "lm2": 0.162 * 2 + 0.134,
-        "tm": 1.050 + 0.064 + 0.075 + 0.070,
-        "head": 0.605
-    }
-    centres = {
-        "rc": (setup["bg"][0], setup["bg"][1] + setup["rl"] / 2),
-        "sc": (setup["bg"][0], setup["bg"][1] + setup["rl"] + setup["sl2"] / 2),
-        "lc": (setup["bg"][0] + setup["sl4"][1], setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["sl4"][0] / 2 + setup["ll1"] / 2),
-        "tc": (setup["bg"][0] - setup["sl3"] / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] / 2 -0.25),
-        
-        "hip": (setup["bg"][0] , setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["sl4"][0] /2),
-        "a1c": (setup["bg"][0] - setup["sl3"] / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] / 2)
-    }
+        torso_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angle -self.simulation_data["pm_space"].bodies[1].angle)
+        torso_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
+        # torso_angle_acc = (torso_angle_velocity - self.observation[5]) / self.step_length
 
-    # these add the object to the simulation
-    bodies = {
-        "rod": Rod(centres["rc"], (0, setup["rl"] / 2), (0, -setup["rl"] / 2), setup["rm"], pm_space),
-        "swing": Swing(centres["sc"],
-                           (0, -setup["sl2"] / 2), (setup["sl1"] / 2, -setup["sl2"] / 2),#a1,b1
-                           (0, setup["sl2"] / 2), (0, -setup["sl2"] / 2),#a2,b2
-                           (-setup["sl3"] / 2 - 0.5, setup["sl2"] / 2), (setup["sl3"] / 2 - 0.5, setup["sl2"] / 2),#a3,b3
-                           (0 , setup["sl2"] / 2 - setup["sl4"][0] /2), (setup["sl4"][1], setup["sl2"] / 2 - setup["sl4"][0] /2),#a4,b4
-                           setup["sm1"], setup["sm2"], setup["sm3"],
-                           setup["sm4"], pm_space),
-        "leg": Leg(centres["lc"], (0, - setup["ll1"] / 2), (0, setup["ll1"] / 2), (0, setup["ll1"] / 2),
-                       (setup["ll2"], setup["ll1"] / 2), setup["lm1"], setup["lm2"], pm_space),
-        "torso": Torso((centres["hip"][0], centres["hip"][1]- setup["tl"] / 2 -0.25),
-                       (0, -setup["tl"] / 2 +0.25), (0, setup["tl"] / 2 -0.25),#a1,b1
-                       6, (0, -2 -setup["tl"] / 2 +0.25), setup["tm"], setup["head"], pm_space),
-    }
+        top_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle)
+        top_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity)
+        # top_angle_acc = (top_angle_velocity - self.observation[6]) / self.step_length
 
-    # fixed joints of simulation
-    joints = {
-        "back": Pinjoint(bodies["swing"].body, bodies["torso"].body, (0 , setup["sl2"] / 2 - setup["sl4"][0] /2),
-                             (0, setup["tl"] / 2), pm_space),
-        "front": Pinjoint(bodies["swing"].body, bodies["leg"].body, (setup["sl4"][1], (setup["sl2"] - setup["sl4"][0]) / 2 ),
-                              (0, -setup["ll1"] / 2), pm_space),
-        "bottom": Pinjoint(bodies["rod"].body, bodies["swing"].body, (0, setup["rl"] / 2), (0, -setup["sl2"] / 2),
-                               pm_space),
-        "top": Pinjoint(background, bodies["rod"].body, setup["bg"], (0, -setup["rl"] / 2), pm_space),
-    }
+        combined_joint_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle - self.simulation_data["pm_space"].bodies[1].angle)
+        combined_joint_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity - self.simulation_data["pm_space"].bodies[1].angular_velocity)
+        # combined_joint_angle_acc = (combined_joint_angle_velocity - self.observation[7]) / self.step_length
 
-    motors = {
-        "back": Simplemotor(bodies["swing"].body, bodies["leg"].body, 0, pm_space),
-        "front": Simplemotor(bodies["swing"].body, bodies["torso"].body, 0, pm_space)
-    }
+        observation = np.array([leg_angle, torso_angle, top_angle, combined_joint_angle, leg_angle_velocity, torso_angle_velocity, top_angle_velocity, combined_joint_angle_velocity])   #, leg_angle_acc, torso_angle_acc, top_angle_acc, combined_joint_angle_acc])
+        # print(observation)
+        return observation
 
-    return {"pm_space": pm_space, "motors": motors, "bodies": bodies, "joints": joints, "speeds": speeds}
+    def get_reward(self, observation):
+        k1,k2,k3,k4,k5,k6,k7 = 1,0,0,0,0,0,0
+        top_angle, combined_joint_angle  = observation[2:4]
+        # leg_acc, torso_acc = observation[7:9]
+        reward = top_angle * top_angle
+        penalty = combined_joint_angle * combined_joint_angle
+        leg_acc = 0
+        torso_acc = 0
+        effort = get_effort(self, leg_acc, torso_acc,k4,k5,k6,k7)
+        # print(effort,reward,penalty)
+        return k1*reward - k2*penalty - k3*effort
 
-def perform_action(environment, action, simulation_data):
-    leg_angle = 180/np.pi * (environment.simulation_data["pm_space"].bodies[2].angle - environment.simulation_data["pm_space"].bodies[1].angle)
-    torso_angle = 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
-    
-    acceleration = 0.1
-    signs = [0, 0]
-    if action[0] > leg_angle:
-        signs[0] = -action[1]
-    else:
-        signs[0] = action[1]
-    
-    if action[2] > torso_angle:
-        signs[1] = -action[3]
-    else:
-        signs[1] = action[3]
-        
-    
-    #print(abs(action[0] - leg_angle))
-    print(environment.simulation_data["speeds"][0])
-    
-    if abs(action[0] - leg_angle) >= 5:
-        if environment.simulation_data["speeds"][0] == signs[0]:
-            pass
-        elif environment.simulation_data["speeds"][0] < signs[0]:
-            environment.simulation_data["speeds"][0] += acceleration
-        elif environment.simulation_data["speeds"][0] > signs[0]:
-            environment.simulation_data["speeds"][0] -= acceleration
-            
-    else:
-        if environment.simulation_data["speeds"][0] > 0.1:
-              environment.simulation_data["speeds"][0] -= acceleration
-        elif environment.simulation_data["speeds"][0] < -0.1:
-              environment.simulation_data["speeds"][0] += acceleration
+    def get_info(self):
+        return {"empty":None}
+
+    def quit_timer(self):
+        if self.run_time >= self.run_duration:
+            return True
         else:
-            environment.simulation_data["speeds"][0] = 0
-        
-    add_motor_l(simulation_data, environment.simulation_data["speeds"][0])
-    
-    
-    if abs(action[2] - torso_angle) >= 5:
-        if environment.simulation_data["speeds"][1] == signs[1]:
-            pass
-        elif environment.simulation_data["speeds"][1] < signs[1]:
-            environment.simulation_data["speeds"][1] += acceleration
-        elif environment.simulation_data["speeds"][1] > signs[1]:
-            environment.simulation_data["speeds"][1] -= acceleration
-            
-    else:
-        if environment.simulation_data["speeds"][1] > 0.1:
-              environment.simulation_data["speeds"][1] -= acceleration
-        elif environment.simulation_data["speeds"][1] < -0.1:
-              environment.simulation_data["speeds"][1] += acceleration
-        else:
-            environment.simulation_data["speeds"][1] = 0
-         
-    add_motor_t(simulation_data, environment.simulation_data["speeds"][1])
-    
-    return simulation_data
-
-def add_motor_l(simulation_data, speed):
-    simulation_data["motors"]["front"] = Simplemotor(simulation_data["bodies"]["swing"].body,
-                                                     simulation_data["bodies"]["leg"].body, speed,
-                                                     simulation_data["pm_space"])
-
-    
-def add_motor_t(simulation_data, speed):
-    simulation_data["motors"]["back"] = Simplemotor(simulation_data["bodies"]["swing"].body,
-                                                     simulation_data["bodies"]["torso"].body, speed,
-                                                     simulation_data["pm_space"])
+            self.run_time += 1
+            return False
 
 
-
-# ---------------------------------------------------------------------------------------------------------------------
-# manual actions from keypresses:
-
-def get_action(keytouple):
-    # FOR MANUAL CONTROL OF THE SIMULATION (RETURN ACTION ARRAYS FROM KEY PRESSES)
-
-  if keytouple[pygame.K_l]:
-        leg_action = np.array([-90, 6, 0, 0])
-
-  elif keytouple[pygame.K_j]:
-      leg_action = np.array([45, 6, 0, 0])
-
-  else:
-      leg_action = np.array([0, 0, 0, 0])
-        
-  if keytouple[pygame.K_d]:
-      torso_action = np.array([0, 0, -60, 6])
-
-  elif keytouple[pygame.K_a]:
-      torso_action = np.array([0, 0, 45, 6])
-
-  else:
-      torso_action = np.array([0, 0, 0, 0])
-    
-  return leg_action + torso_action
+# Fetch pygame events
+def get_events():
+    get_event = pygame.event.get()
+    for event in get_event:
+        if event.type == pygame.QUIT:
+            pygame.quit()
+    return pygame.key.get_pressed()
 
 
+# Main loop - actually runs the code
+def main():
+    # Initialise the simulation:
+    environment = CustomEnv()
+    environment.init_render()
+    #check_env(environment)
+    # Run the simulation:
+    while True:
+        keys_pressed = get_events()
+        action = get_action(keys_pressed)
+
+        # Step the simulation, then render the result (rendering in pymunk)
+        environment.step(action)
+        environment.render()
+
+# main()
+
+# --------------------------------------------------------------------
+# PPO stuff
+
+def PPO_main():
+    env = CustomEnv()
+    model = PPO("MlpPolicy",env,verbose=1)
+    model.learn(total_timesteps=100000)
+    model.save("test_PPO_model_data")
+    print("model saved\n---------------------------------------------------------")
+    del model
+
+    model = PPO.load("test_PPO_model_data")
+    print("model loaded\n---------------------------------------------------------")
+    obs = env.reset()
+    print("initialising renderer")
+    env.init_render()
+    print("starting while loop (running the trained model)")
+    while True:
+        action, _states = model.predict(obs)
+        print("action:",action)
+        obs, rewards, done, info = env.step(action)
+        print("observation:",obs,"rewards:",rewards)
+        env.render()
+
+PPO_main()
