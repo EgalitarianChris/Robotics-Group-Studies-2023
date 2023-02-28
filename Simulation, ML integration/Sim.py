@@ -2,13 +2,6 @@ import pymunk
 import numpy as np
 import pygame
 
-def angle(x1, x2, y1, y2, theta=0, phi=0):
-    'angle between two points, can take away other angles to make it relative to other component'
-    return np.arctan2(x2 -x1, y2 - y1) - theta - phi
-
-def CoM(x1, x2, y1, y2, m1, m2):
-    'center of mass'
-    return ((m1*x1 + m2*x2)/2, (m1*y1 + m2*y2)/2)
 
 class Rod:
     def __init__(self, pos, a, b, m, space, radius=2):
