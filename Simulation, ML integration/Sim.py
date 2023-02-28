@@ -194,51 +194,57 @@ def setup_simulation():
 def perform_action(environment, action, simulation_data):
     leg_angle = 180/np.pi * (environment.simulation_data["pm_space"].bodies[2].angle - environment.simulation_data["pm_space"].bodies[1].angle)
     torso_angle = 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
+    
     acceleration = 0.1
+    signs = [0, 0]
+    if action[0] > leg_angle:
+        signs[0] = -action[1]
+    else:
+        signs[0] = action[1]
+    
+    if action[2] > torso_angle:
+        signs[1] = -action[3]
+    else:
+        signs[1] = action[3]
+        
     
     #print(abs(action[0] - leg_angle))
     print(environment.simulation_data["speeds"][0])
     
     if abs(action[0] - leg_angle) >= 5:
-        if environment.simulation_data["speeds"][0] == action[1]:
+        if environment.simulation_data["speeds"][0] == signs[0]:
             pass
-        elif environment.simulation_data["speeds"][0] < action[1]:
+        elif environment.simulation_data["speeds"][0] < signs[0]:
             environment.simulation_data["speeds"][0] += acceleration
-        elif environment.simulation_data["speeds"][0] > action[1]:
+        elif environment.simulation_data["speeds"][0] > signs[0]:
             environment.simulation_data["speeds"][0] -= acceleration
             
-    elif abs(action[0] - leg_angle) >= 1:
+    else:
         if environment.simulation_data["speeds"][0] > 0.1:
               environment.simulation_data["speeds"][0] -= acceleration
         elif environment.simulation_data["speeds"][0] < -0.1:
               environment.simulation_data["speeds"][0] += acceleration
         else:
             environment.simulation_data["speeds"][0] = 0
-            
-    else:
-        environment.simulation_data["speeds"][0] = 0
         
     add_motor_l(simulation_data, environment.simulation_data["speeds"][0])
     
     
     if abs(action[2] - torso_angle) >= 5:
-        if environment.simulation_data["speeds"][1] == action[3]:
+        if environment.simulation_data["speeds"][1] == signs[1]:
             pass
-        elif environment.simulation_data["speeds"][1] < action[3]:
+        elif environment.simulation_data["speeds"][1] < signs[1]:
             environment.simulation_data["speeds"][1] += acceleration
-        elif environment.simulation_data["speeds"][1] > action[3]:
+        elif environment.simulation_data["speeds"][1] > signs[1]:
             environment.simulation_data["speeds"][1] -= acceleration
             
-    elif abs(action[2] - torso_angle) >= 1:
+    else:
         if environment.simulation_data["speeds"][1] > 0.1:
               environment.simulation_data["speeds"][1] -= acceleration
         elif environment.simulation_data["speeds"][1] < -0.1:
               environment.simulation_data["speeds"][1] += acceleration
         else:
             environment.simulation_data["speeds"][1] = 0
-            
-    else:
-        environment.simulation_data["speeds"][1] = 0
          
     add_motor_t(simulation_data, environment.simulation_data["speeds"][1])
     
@@ -267,7 +273,7 @@ def get_action(keytouple):
         leg_action = np.array([-90, 6, 0, 0])
 
   elif keytouple[pygame.K_j]:
-      leg_action = np.array([45, -6, 0, 0])
+      leg_action = np.array([45, 6, 0, 0])
 
   else:
       leg_action = np.array([0, 0, 0, 0])
@@ -276,10 +282,12 @@ def get_action(keytouple):
       torso_action = np.array([0, 0, -60, 6])
 
   elif keytouple[pygame.K_a]:
-      torso_action = np.array([0, 0, 45, -6])
+      torso_action = np.array([0, 0, 45, 6])
 
   else:
       torso_action = np.array([0, 0, 0, 0])
     
   return leg_action + torso_action
+
+
 
