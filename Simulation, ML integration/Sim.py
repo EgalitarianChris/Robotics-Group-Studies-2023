@@ -10,9 +10,8 @@ def CoM(x1, x2, y1, y2, m1, m2):
     'center of mass'
     return ((m1*x1 + m2*x2)/2, (m1*y1 + m2*y2)/2)
 
-
 class Rod:
-    def __init__(self, pos, a, b, m, space, radius=4):
+    def __init__(self, pos, a, b, m, space, radius=2):
         'position of CoM, start, end, mass, radius(width)'
         self.body = pymunk.Body()
         self.body.position = pos
@@ -42,7 +41,7 @@ class Arm:
         self.shape.filter = pymunk.ShapeFilter(group=1)
         self.shape.color = (255, 255, 0, 0)
         space.add(self.body, self.shape)
-        
+
 class Leg:
     def __init__(self, pos, a1, b1, a2, b2, m1, m2, space, radius=3):
         'position of CoM, leg_start, leg_end, foot_start, foot_end,'
@@ -64,13 +63,6 @@ class Leg:
         self.leg.mass = m2
         self.foot.color = (0, 255, 0, 0)
         space.add(self.body, self.leg, self.foot)
-
-class Rotarylimitjoint:
-    'stops swing moving out of control area i think'
-    def __init__(self, b, b2, min, max, space, collide=True):
-        joint = pymunk.constraints.RotaryLimitJoint(b, b2, min, max)
-        joint.collide_bodies = collide
-        space.add(joint)
 
 class Simplemotor:
     'is added and removed at diffrent points to move a joint at a constant speed'
@@ -116,7 +108,7 @@ class Torso:
         self.a1 = a1
         self.b1 = b1
         self.body.center_of_gravity = (0,0)
-        self.torso = pymunk.Segment(self.body, self.a1, self.b1 , radius=3)
+        self.torso = pymunk.Segment(self.body, self.a1, self.b1 , radius=2)
         self.torso.filter = pymunk.ShapeFilter(group = 1)
         self.torso.mass = m1
         self.torso.color = (255, 0, 0, 0)
