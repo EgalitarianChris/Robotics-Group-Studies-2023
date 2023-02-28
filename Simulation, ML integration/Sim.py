@@ -36,22 +36,21 @@ class Arm:
         space.add(self.body, self.shape)
 
 class Leg:
-    def __init__(self, pos, a1, b1, a2, b2, m1, m2, space, radius=3):
+    def __init__(self, pos, a1, b1, a2, b2, m1, m2, space):
         'position of CoM, leg_start, leg_end, foot_start, foot_end,'
         ' leg_mass,  foot_mass, radius(width)'
         self.body = pymunk.Body()
         self.body.position = pos
-        self.radius = radius
         self.a1 = a1
         self.b1 = b1
         self.a2 = a2
         self.b2 = b2
         self.body.center_of_gravity = (0,0)#needs calculation
-        self.leg = pymunk.Segment(self.body, self.a1, self.b1, radius)
+        self.leg = pymunk.Segment(self.body, self.a1, self.b1, radius=2)
         self.leg.filter = pymunk.ShapeFilter(group = 1)
         self.leg.color = (0, 255, 0, 0)
         self.leg.mass = m1
-        self.foot= pymunk.Segment(self.body, self.a2, self.b2, radius=radius)
+        self.foot= pymunk.Segment(self.body, self.a2, self.b2, radius=1)
         self.foot.filter = pymunk.ShapeFilter(group = 1)
         self.leg.mass = m2
         self.foot.color = (0, 255, 0, 0)
@@ -84,7 +83,7 @@ class Swing:
         s2 = pymunk.Segment(self.body, a2, b2, radius=3)#vertical
         s2.filter = pymunk.ShapeFilter(group = 1)
         s2.mass = m2
-        s3 = pymunk.Segment(self.body, a3, b3, radius=2)#base
+        s3 = pymunk.Segment(self.body, a3, b3, radius=1)#base
         s3.filter = pymunk.ShapeFilter(group = 1)
         s3.mass = m3
         s4 = pymunk.Segment(self.body, a4, b4, radius=3)#upper leg
@@ -299,6 +298,4 @@ def get_action(keytouple):
       torso_action = np.array([0, 0, 0, 0])
     
   return leg_action + torso_action
-
-
 
