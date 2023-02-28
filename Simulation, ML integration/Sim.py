@@ -27,6 +27,22 @@ class Rod:
         self.shape.color = (0, 255, 0, 0)
         space.add(self.body, self.shape)
 
+class Arm:
+    def __init__(self, pos, a, b, m, space, radius=2):
+        'position of CoM, start, end, mass, radius(width)'
+        self.body = pymunk.Body()
+        self.body.position = pos
+        self.radius = radius
+        self.a = a
+        self.b = b
+        self.body.center_of_gravity = (0,0)
+        self.shape = pymunk.Segment(self.body, self.a, self.b, radius)
+        self.shape.mass = m
+        self.shape.elasticity = 0
+        self.shape.filter = pymunk.ShapeFilter(group=1)
+        self.shape.color = (255, 255, 0, 0)
+        space.add(self.body, self.shape)
+        
 class Leg:
     def __init__(self, pos, a1, b1, a2, b2, m1, m2, space, radius=3):
         'position of CoM, leg_start, leg_end, foot_start, foot_end,'
@@ -126,12 +142,11 @@ def setup_simulation():
         "sl2": 19 + 5,
         "sl3": 17,
         "sl4": [8,10],
-        "ll1": 16,
-        "ll2": 6,
+        "ll1": 10.3,
+        "ll2": 15,
         "tl": 18.5,
         "a1": 10,
-        "a2": 10,
-        "a3": 30,
+        "a2": 11,
 
         "bg": (400, 200),
 
@@ -140,11 +155,13 @@ def setup_simulation():
         "sm1": 0.381 / 2,
         "sm2": 1.026,
         "sm3": 0.131 * 2 + 0.070 + 0.390 * 2,
-        "sm4": 0.5,
+        "sm4": 0.603* 2 + 0.134,
         "lm1": 0.292 * 2 + 0.134,
         "lm2": 0.162 * 2 + 0.134,
         "tm": 1.050 + 0.064 + 0.075 + 0.070,
-        "head": 0.605
+        "head": 0.605,
+        "am1": 0.075 + 0.158 * 2 + 0.065,
+        "am2": 0.065 + 0.078 * 2 + 0.0185 * 2
     }
     centres = {
         "rc": (setup["bg"][0], setup["bg"][1] + setup["rl"] / 2),
@@ -153,24 +170,33 @@ def setup_simulation():
         "tc": (setup["bg"][0] - setup["sl3"] / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] / 2 -0.25),
         
         "hip": (setup["bg"][0] , setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["sl4"][0] /2),
-        "a1c": (setup["bg"][0] - setup["sl3"] / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] / 2)
+        "a1c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
+        "a2c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) + setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2)
     }
 
     # these add the object to the simulation
     bodies = {
         "rod": Rod(centres["rc"], (0, setup["rl"] / 2), (0, -setup["rl"] / 2), setup["rm"], pm_space),
         "swing": Swing(centres["sc"],
-                           (0, -setup["sl2"] / 2), (setup["sl1"] / 2, -setup["sl2"] / 2),#a1,b1
+                           (0, -setup["sl2"] / 2), (setup["sl1"], -setup["sl2"] / 2),#a1,b1
                            (0, setup["sl2"] / 2), (0, -setup["sl2"] / 2),#a2,b2
                            (-setup["sl3"] / 2 - 0.5, setup["sl2"] / 2), (setup["sl3"] / 2 - 0.5, setup["sl2"] / 2),#a3,b3
                            (0 , setup["sl2"] / 2 - setup["sl4"][0] /2), (setup["sl4"][1], setup["sl2"] / 2 - setup["sl4"][0] /2),#a4,b4
                            setup["sm1"], setup["sm2"], setup["sm3"],
                            setup["sm4"], pm_space),
-        "leg": Leg(centres["lc"], (0, - setup["ll1"] / 2), (0, setup["ll1"] / 2), (0, setup["ll1"] / 2),
-                       (setup["ll2"], setup["ll1"] / 2), setup["lm1"], setup["lm2"], pm_space),
+        "leg": Leg(centres["lc"], (0, - setup["ll1"] / 2), (0, setup["ll1"] / 2), (-5, setup["ll1"] / 2),
+                       (10, setup["ll1"] / 2), setup["lm1"], setup["lm2"], pm_space),
         "torso": Torso((centres["hip"][0], centres["hip"][1]- setup["tl"] / 2 -0.25),
                        (0, -setup["tl"] / 2 +0.25), (0, setup["tl"] / 2 -0.25),#a1,b1
                        6, (0, -2 -setup["tl"] / 2 +0.25), setup["tm"], setup["head"], pm_space),
+    
+        "upper_arm": Arm(centres["a1c"], (-setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, -setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
+                          (setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
+                          setup["a1"], pm_space),
+        "lower_arm": Arm(centres["a2c"], (-setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
+                          (setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
+                          setup["a2"], pm_space),
+        # "hand": 
     }
 
     # fixed joints of simulation
