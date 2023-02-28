@@ -202,44 +202,59 @@ def setup_simulation():
     return {"pm_space": pm_space, "motors": motors, "bodies": bodies, "joints": joints, "speeds": speeds}
 
 def perform_action(environment, action, simulation_data):
-    leg_angle = 180/np.pi * (environment.simulation_data["pm_space"].bodies[2].angle - environment.simulation_data["pm_space"].bodies[1].angle)
-    torso_angle = 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
     
+    #get angle of leg and torso relative to the verticle in degrees
+    leg_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[2].angle - environment.simulation_data["pm_space"].bodies[1].angle)
+    torso_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
+    
+    #arbitrary acceleration, to be changed later (units of change in speed per tick)
     acceleration = 0.1
+    
+    #a version of the input speed with directions included
     signs = [0, 0]
-    if action[0] > leg_angle:
+    
+    #defining the sign of the leg motion so if the angle of the leg is more positive (anti-clockwise) than the target angle the motion will be a negative (clockwise rotation)
+    if action[0] < leg_angle:
         signs[0] = -action[1]
+    #if the angle of the leg is more clockwise this will result in anticlockwise rotation    
     else:
         signs[0] = action[1]
     
-    if action[2] > torso_angle:
+    #same as above but for the torso
+    if action[2] < torso_angle:
         signs[1] = -action[3]
     else:
         signs[1] = action[3]
         
-    
-    #print(abs(action[0] - leg_angle))
-    print(environment.simulation_data["speeds"][0])
-    
+    #if the leg is greater than 5 degrees from the target
     if abs(action[0] - leg_angle) >= 5:
+        #if the actual rotation speed is equal to the intended speed then pass
         if environment.simulation_data["speeds"][0] == signs[0]:
             pass
+        #if the actual speed is less than the intended speed increase the actual speed by a value of acceleration
         elif environment.simulation_data["speeds"][0] < signs[0]:
             environment.simulation_data["speeds"][0] += acceleration
+        #if the actual speed is greater than the intended speed decrease the speed
         elif environment.simulation_data["speeds"][0] > signs[0]:
             environment.simulation_data["speeds"][0] -= acceleration
-            
+         
+    #if the leg is within 5 degrees of the target angle
     else:
+        #if the speed is positive (within a 0.2 range of 0) decrease it by a value of acceleration
         if environment.simulation_data["speeds"][0] > 0.1:
               environment.simulation_data["speeds"][0] -= acceleration
+        #if the speed is negative (again within a threshold) increase it by acceleration
         elif environment.simulation_data["speeds"][0] < -0.1:
               environment.simulation_data["speeds"][0] += acceleration
+        #if the speed is close to 0 set it to 0 to minimise overshooting through fluctuations
         else:
             environment.simulation_data["speeds"][0] = 0
         
+    #add a motor to the leg each tick with a speed adjusted in the above functions
     add_motor_l(simulation_data, environment.simulation_data["speeds"][0])
     
     
+    #repeat of the above but for the torso
     if abs(action[2] - torso_angle) >= 5:
         if environment.simulation_data["speeds"][1] == signs[1]:
             pass
@@ -280,19 +295,19 @@ def get_action(keytouple):
     # FOR MANUAL CONTROL OF THE SIMULATION (RETURN ACTION ARRAYS FROM KEY PRESSES)
 
   if keytouple[pygame.K_l]:
-        leg_action = np.array([-90, 6, 0, 0])
+        leg_action = np.array([90, 6, 0, 0])
 
   elif keytouple[pygame.K_j]:
-      leg_action = np.array([45, 6, 0, 0])
+      leg_action = np.array([-45, 6, 0, 0])
 
   else:
       leg_action = np.array([0, 0, 0, 0])
         
   if keytouple[pygame.K_d]:
-      torso_action = np.array([0, 0, -60, 6])
+      torso_action = np.array([0, 0, 60, 6])
 
   elif keytouple[pygame.K_a]:
-      torso_action = np.array([0, 0, 45, 6])
+      torso_action = np.array([0, 0, -45, 6])
 
   else:
       torso_action = np.array([0, 0, 0, 0])
