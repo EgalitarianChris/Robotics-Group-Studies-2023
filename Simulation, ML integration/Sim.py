@@ -266,20 +266,20 @@ def get_action(keytouple):
   if keytouple[pygame.K_l]:
         leg_action = np.array([-90, 6, 0, 0])
 
-    elif keytouple[pygame.K_j]:
-        leg_action = np.array([45, -6, 0, 0])
+  elif keytouple[pygame.K_j]:
+      leg_action = np.array([45, -6, 0, 0])
 
-    else:
-        leg_action = np.array([0, 0, 0, 0])
+  else:
+      leg_action = np.array([0, 0, 0, 0])
         
-    if keytouple[pygame.K_d]:
-        torso_action = np.array([0, 0, -60, 6])
+  if keytouple[pygame.K_d]:
+      torso_action = np.array([0, 0, -60, 6])
 
-    elif keytouple[pygame.K_a]:
-        torso_action = np.array([0, 0, 45, -6])
+  elif keytouple[pygame.K_a]:
+      torso_action = np.array([0, 0, 45, -6])
 
-    else:
-        torso_action = np.array([0, 0, 0, 0])
+  else:
+      torso_action = np.array([0, 0, 0, 0])
     
-    return leg_action + torso_action
+  return leg_action + torso_action
 
