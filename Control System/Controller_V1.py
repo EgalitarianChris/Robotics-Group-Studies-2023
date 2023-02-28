@@ -169,9 +169,6 @@ def get_angle_info():
    bottom = 0.5*(angle_info[2] + angle_info[3])
    small_encoder_angle = top + bottom
    
-   # convert this into returnables
-
-
  return [large_encoder_angle,small_encoder_angle]
 
 
