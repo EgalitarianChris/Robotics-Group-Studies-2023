@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar  2 17:46:52 2023
+
+@author: abisath
+"""
+
+from naoqi import ALProxy
+import time
+import matplotlib.pyplot as plt
+
+# IP address and port number of the robot
+ip = "nao.local"
+port = 9559
+
+# Create a proxy to connect to the robot's ALMotion module
+motion_proxy = ALProxy("ALMotion", ip, port)
+
+# Joint to track (in this example, the right elbow joint)
+joint_name = ["LElbowRoll", "RElbowRoll", "LShoulderPitch", "RShoulderPitch", "LKneePitch", "RKneePitch"]
+
+# Set the joint stiffness to 1.0
+stiffness = 1.0
+motion_proxy.setStiffnesses(joint_name, stiffness)
+
+# Create lists to store the time and velocity data
+times = []
+print(times)
+velocities = []
+print(velocities)
+
+# Record joint velocities for 5 seconds
+start_time = time.time()
+while time.time() - start_time < 5.0:
+    velocity = motion_proxy.getJointVelocity(joint_name)
+    times.append(time.time() - start_time)
+    velocities.append(velocity)
+
+# Plot the velocity data as a function of time
+plt.plot(times, velocities)
+plt.xlabel("Time (s)")
+plt.ylabel("Joint Velocity (rad/s)")
+plt.title("Speed-Time Graph of " + joint_name)
+plt.show()
