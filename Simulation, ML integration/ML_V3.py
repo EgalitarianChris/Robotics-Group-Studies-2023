@@ -24,7 +24,7 @@ class CustomEnv(gym.Env):
         a = self.step_length*1000
 
         self.action_space = spaces.Box(np.array([-a, -5*a, -a, -5*a]), np.array([a, 5*a, a, 5*a]), dtype=float)
-        self.observation_space = spaces.Box(np.array([-np.pi, -np.pi, -np.pi, -np.pi, -10, -10, -10, -10]), np.array([np.pi, np.pi, np.pi, np.pi, 10, 10, 10, 10]), dtype=np.float32)
+        self.observation_space = spaces.Box(np.array([-180, -180, -180, -180, -360, -360, -180, -180, -100, -100, -100, -100]), np.array([180, 180, 180, 180, 360, 360, 180, 180, 100, 100, 100, 100]), dtype=np.float32)
 
         self.simulation_data = setup_simulation()
 
@@ -85,28 +85,28 @@ class CustomEnv(gym.Env):
     def get_obs(self):
         leg_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angle -self.simulation_data["pm_space"].bodies[1].angle)
         leg_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
-        # leg_angle_acc = (leg_angle_velocity - self.observation[4]) / self.step_length
+        leg_angle_acc = (leg_angle_velocity - self.observation[4]) / self.step_length
 
         torso_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angle -self.simulation_data["pm_space"].bodies[1].angle)
         torso_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
-        # torso_angle_acc = (torso_angle_velocity - self.observation[5]) / self.step_length
+        torso_angle_acc = (torso_angle_velocity - self.observation[5]) / self.step_length
 
         top_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle)
         top_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity)
-        # top_angle_acc = (top_angle_velocity - self.observation[6]) / self.step_length
+        top_angle_acc = (top_angle_velocity - self.observation[6]) / self.step_length
 
         combined_joint_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle - self.simulation_data["pm_space"].bodies[1].angle)
         combined_joint_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity - self.simulation_data["pm_space"].bodies[1].angular_velocity)
-        # combined_joint_angle_acc = (combined_joint_angle_velocity - self.observation[7]) / self.step_length
+        combined_joint_angle_acc = (combined_joint_angle_velocity - self.observation[7]) / self.step_length
 
-        observation = np.array([leg_angle, torso_angle, top_angle, combined_joint_angle, leg_angle_velocity, torso_angle_velocity, top_angle_velocity, combined_joint_angle_velocity])   #, leg_angle_acc, torso_angle_acc, top_angle_acc, combined_joint_angle_acc])
+        observation = np.array([leg_angle, torso_angle, top_angle, combined_joint_angle, leg_angle_velocity, torso_angle_velocity, top_angle_velocity, combined_joint_angle_velocity, leg_angle_acc, torso_angle_acc, top_angle_acc, combined_joint_angle_acc])
         # print(observation)
         return observation
 
     def get_reward(self, observation):
         k1,k2,k3,k4,k5,k6,k7 = 1,0,0,0,0,0,0
         top_angle, combined_joint_angle  = observation[2:4]
-        # leg_acc, torso_acc = observation[7:9]
+        leg_acc, torso_acc = observation[7:9]
         reward = top_angle * top_angle
         penalty = combined_joint_angle * combined_joint_angle
         leg_acc = 0
@@ -158,7 +158,7 @@ def main():
 def PPO_main():
     env = CustomEnv()
     model = PPO("MlpPolicy",env,verbose=1)
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=1000000)
     model.save("test_PPO_model_data")
     print("model saved\n---------------------------------------------------------")
     del model
