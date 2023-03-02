@@ -215,16 +215,16 @@ def perform_action(environment, action, simulation_data):
     
     #defining the sign of the leg motion so if the angle of the leg is more positive (anti-clockwise) than the target angle the motion will be a negative (clockwise rotation)
     if action[0] < leg_angle:
-        signs[0] = -action[1]
+        signs[0] = - (np.pi/180) * action[1]
     #if the angle of the leg is more clockwise this will result in anticlockwise rotation    
     else:
-        signs[0] = action[1]
+        signs[0] = (np.pi/180) * action[1]
     
     #same as above but for the torso
     if action[2] < torso_angle:
-        signs[1] = -action[3]
+        signs[1] = - (np.pi/180) * action[3]
     else:
-        signs[1] = action[3]
+        signs[1] = (np.pi/180) * action[3]
         
     #if the leg is greater than 5 degrees from the target
     if abs(action[0] - leg_angle) >= 5:
@@ -295,19 +295,19 @@ def get_action(keytouple):
     # FOR MANUAL CONTROL OF THE SIMULATION (RETURN ACTION ARRAYS FROM KEY PRESSES)
 
   if keytouple[pygame.K_l]:
-        leg_action = np.array([90, 6, 0, 0])
+        leg_action = np.array([90, 360, 0, 0])
 
   elif keytouple[pygame.K_j]:
-      leg_action = np.array([-45, 6, 0, 0])
+      leg_action = np.array([-45, 360, 0, 0])
 
   else:
       leg_action = np.array([0, 0, 0, 0])
         
   if keytouple[pygame.K_d]:
-      torso_action = np.array([0, 0, 60, 6])
+      torso_action = np.array([0, 0, 60, 360])
 
   elif keytouple[pygame.K_a]:
-      torso_action = np.array([0, 0, -45, 6])
+      torso_action = np.array([0, 0, -45, 360])
 
   else:
       torso_action = np.array([0, 0, 0, 0])
