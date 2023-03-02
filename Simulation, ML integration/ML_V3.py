@@ -132,9 +132,6 @@ def main():
         environment.step(action)
         environment.render()
 
-
-main()
-
 # --------------------------------------------------------------------
 # PPO stuff
 
@@ -160,4 +157,7 @@ def PPO_main():
         print("observation:",obs,"rewards:",rewards)
         env.render()
 
-# PPO_main()
+
+if __name__ == "__main__":
+    main()
+    #PPO_main()
