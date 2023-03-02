@@ -16,7 +16,6 @@ class CustomEnv(gym.Env):
 
     # Initialising the environment - SINGLE SETUP FUNCTION CALL to be written by simulations team:
     def __init__(self, env_config={}):
-        self.run_duration = 2500
         self.run_time = 0
         self.reward = 0
         # self.step_length = 1 / 100
@@ -27,7 +26,7 @@ class CustomEnv(gym.Env):
 
         self.simulation_data = setup_simulation()
         self.step_length = self.simulation_data["setup"]["step_length"]
-
+        self.run_duration = 10 / self.step_length
     # The actual bit where the simulation happens
     def step(self, action=np.zeros((4), dtype=np.single)):
         action1 = np.array([action[0]*63+32, action[1]*190.3+190.3, action[2]*77.5+50.5, action[3]*190.3+190.3])
@@ -57,7 +56,7 @@ class CustomEnv(gym.Env):
         self.window.fill((255, 255, 255))
         self.simulation_data["pm_space"].debug_draw(self.options)
         pygame.display.update()
-        #time.sleep(0.1)
+        time.sleep(0.01)
 
     # Reset the simulation for the next training run (NOT RELEVENT TO SIMULATIONS)
     def reset(self):
@@ -123,7 +122,7 @@ def main():
     # Initialise the simulation:
     environment = CustomEnv()
     environment.init_render()
-    check_env(environment)
+    # check_env(environment)
     # Run the simulation:
     while True:
         keys_pressed = get_events()
@@ -134,7 +133,7 @@ def main():
         environment.render()
 
 
-# main()
+main()
 
 # --------------------------------------------------------------------
 # PPO stuff
@@ -142,7 +141,8 @@ def main():
 def PPO_main():
     env = CustomEnv()
     model = PPO("MlpPolicy",env,verbose=1)
-    model.learn(total_timesteps=40000)
+    episodes = 100
+    model.learn(total_timesteps= env.run_duration * episodes)
     model.save("test_PPO_model_data")
     print("model saved\n---------------------------------------------------------")
     del model
@@ -160,4 +160,4 @@ def PPO_main():
         print("observation:",obs,"rewards:",rewards)
         env.render()
 
-PPO_main()
+# PPO_main()
