@@ -57,7 +57,7 @@ class CustomEnv(gym.Env):
         self.window.fill((255, 255, 255))
         self.simulation_data["pm_space"].debug_draw(self.options)
         pygame.display.update()
-        time.sleep(0.1)
+        #time.sleep(0.1)
 
     # Reset the simulation for the next training run (NOT RELEVENT TO SIMULATIONS)
     def reset(self):
