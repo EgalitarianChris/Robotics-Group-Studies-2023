@@ -73,11 +73,11 @@ class CustomEnv(gym.Env):
         torso_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
         torso_angle_acc = (torso_angle_velocity - self.observation[5]) / self.step_length
 
-        top_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle)
+        top_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle - self.simulation_data["setup"]["phi"])
         top_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity)
         top_angle_acc = (top_angle_velocity - self.observation[6]) / self.step_length
 
-        combined_joint_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle - self.simulation_data["pm_space"].bodies[1].angle)
+        combined_joint_angle = top_angle - 180/np.pi * (self.simulation_data["pm_space"].bodies[1].angle)
         combined_joint_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity - self.simulation_data["pm_space"].bodies[1].angular_velocity)
         combined_joint_angle_acc = (combined_joint_angle_velocity - self.observation[7]) / self.step_length
 
