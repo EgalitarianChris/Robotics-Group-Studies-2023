@@ -1,4 +1,5 @@
 # Import relevent libraries
+import time
 from Sim import setup_simulation, perform_action, get_action
 from effort_parameter import get_effort
 import pygame
@@ -6,33 +7,63 @@ import numpy as np
 import gym
 from gym import spaces
 from pymunk.pygame_util import DrawOptions
-from stable_baselines3.common.env_checker import check_env
+#from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO
-import time
-
 
 # Create gym environment - Contains the machine learning code and the simulation code:
 class CustomEnv(gym.Env):
 
     # Initialising the environment - SINGLE SETUP FUNCTION CALL to be written by simulations team:
-    def __init__(self, env_config={}):
+    def __init__(self):
         self.run_time = 0
         self.reward = 0
         # self.step_length = 1 / 100
         self.observation = np.zeros(12)
         #[-31, 0, -27, 0]    [95, 380.6, 128, 380.6]
-        self.action_space = spaces.Box(np.array([-1, -1, -1, -1]), np.array([1, 1, 1, 1]), dtype=np.float32)
-        self.observation_space = spaces.Box(np.array([-180, -180, -180, -180, -360, -360, -180, -180]), np.array([180, 180, 180, 180, 360, 360, 180, 180]), dtype=np.float32)
+        self.action_space = spaces.Box(np.array([-1, -1, -1, -1]),
+                                       np.array([1, 1, 1, 1]),
+                                       dtype=np.float32)
+        self.observation_space = spaces.Box(np.array([-180, -180, -180, -180, -360, -360, -180, -180]),
+                                            np.array([180, 180, 180, 180, 360, 360, 180, 180]),
+                                            dtype=np.float32)
 
         self.simulation_data = setup_simulation()
         self.step_length = self.simulation_data["setup"]["step_length"]
         self.run_duration = 10 / self.step_length
-    # The actual bit where the simulation happens
+        self.last_action = np.zeros((4), dtype=np.single)
+        self.window = None
+        self.options = None
+
     def step(self, action=np.zeros((4), dtype=np.single)):
-        action1 = np.array([action[0]*63+32, action[1]*190.3+190.3, action[2]*77.5+50.5, action[3]*190.3+190.3])
+        """
+        The actual bit where the simulation happens. Ticks everything forward by one timestep
+        and returns values which get passed into PPO.
+
+        Parameters
+        ----------
+        action : array-like
+            A normalised array of how the arms and legs intend to move. The default is an array of zeros.
+
+        Returns
+        -------
+        observation : array-like
+            Angles and velocities in the swing which gets passed into PPO.
+        reward : float
+            A score of how successfully the robot is swinging, calculated from get_reward().
+        done : boolean
+            Stops the PPO algorithm when it is finished, determined from quit_timer().
+        info : dict
+            Doesn't do anything yet.
+
+        """
+        action1 = np.array([action[0]*63+32,
+                            action[1]*190.3+190.3,
+                            action[2]*77.5+50.5,
+                            action[3]*190.3+190.3])
         self.simulation_data = perform_action(self, action1, self.simulation_data)
         self.last_action = action
-        self.simulation_data["pm_space"].step(self.step_length) # might want to include a bit of random variation to the step duration to help train the agent for running on NAO
+        self.simulation_data["pm_space"].step(self.step_length)
+        # Potentially add random variation in step duration to help train for running on NAO
 
         observation = self.get_obs()
 
@@ -42,16 +73,32 @@ class CustomEnv(gym.Env):
         self.observation = observation
         return observation, self.reward, done, info
 
-    # Initialise the renderer (NOT RELEVENT TO SIMULATIONS)
+
     def init_render(self):
+        """
+        Initialises the renderer, is only called to visualise the simulation,
+        it isn't necessary for the machine learning. (NOT RELEVENT TO SIMULATIONS)
+
+        Returns
+        -------
+        None.
+
+        """
         pygame.init()
         self.window = pygame.display.set_mode((1000, 500))
         self.simulation_data["pm_space"].gravity = 0, 981
         self.options = DrawOptions(self.window)
-        self.clock = pygame.time.Clock()
+        #self.clock = pygame.time.Clock()
 
-    # Render the state of the simulation (NOT RELEVENT TO SIMULATIONS)
     def render(self):
+        """
+        Renders the state of the simulation (NOT RELEVENT TO SIMULATIONS)
+
+        Returns
+        -------
+        None.
+
+        """
         get_events()
         self.window.fill((255, 255, 255))
         self.simulation_data["pm_space"].debug_draw(self.options)
@@ -60,6 +107,15 @@ class CustomEnv(gym.Env):
 
     # Reset the simulation for the next training run (NOT RELEVENT TO SIMULATIONS)
     def reset(self):
+        """
+        Used to initiate a new episode, outputting final observations.
+
+        Returns
+        -------
+        observation : array-like
+            Angles and velocities in the swing which gets passed into PPO.
+
+        """
         self.run_time = 0
         self.reward = 0
         self.simulation_data = setup_simulation()
@@ -67,7 +123,17 @@ class CustomEnv(gym.Env):
         return observation
 
     def get_obs(self):      #could optimise by making array
-        leg_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angle -self.simulation_data["pm_space"].bodies[1].angle)
+        """
+        Calculates leg, torso, top pivot and combined joint angles and velocities.
+        Gets passed into observation array for PPO to use.
+
+        Returns
+        -------
+        observation : array-like
+            Angles and velocities in the swing which gets passed into PPO.
+
+        """
+        leg_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angle - self.simulation_data["pm_space"].bodies[1].angle)
         leg_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
         # leg_angle_acc = (leg_angle_velocity - self.observation[4]) / self.step_length
 
@@ -83,33 +149,82 @@ class CustomEnv(gym.Env):
         combined_joint_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity - self.simulation_data["pm_space"].bodies[1].angular_velocity)
         # combined_joint_angle_acc = (combined_joint_angle_velocity - self.observation[7]) / self.step_length
 
-        observation = np.array([leg_angle, torso_angle, top_angle, combined_joint_angle, leg_angle_velocity, torso_angle_velocity, top_angle_velocity, combined_joint_angle_velocity])# , leg_angle_acc, torso_angle_acc, top_angle_acc, combined_joint_angle_acc])
+        observation = np.array([leg_angle, torso_angle, top_angle, combined_joint_angle,
+                                leg_angle_velocity, torso_angle_velocity, top_angle_velocity,
+                                combined_joint_angle_velocity])
         return observation
 
     def get_reward(self, observation):
-        k1,k2,k3,k4,k5,k6,k7 = 1,0,0,0,0,0,0
+        """
+        Takes in observations and uses them to calculate a reward function.
+        k_1 through k_7 are parameters used to tweak the importance of different
+        behaviour in the neural network.
+
+        Parameters
+        ----------
+        observation : array-like
+            Angles and velocities in the swing which gets passed into PPO.
+
+        Returns
+        -------
+        reward : float
+            A score of how successfully the robot is swinging, PPO attempts to
+            maximise this.
+
+        """
+        k_1, k_2, k_3, k_4, k_5, k_6, k_7 = 1, 0, 0, 0, 0, 0, 0
         top_angle, combined_joint_angle  = observation[2:4]
         # leg_acc, torso_acc = observation[7:9]
         leg_acc , torso_acc = [0, 0]
         reward = top_angle * top_angle
         penalty = combined_joint_angle * combined_joint_angle
-        effort = get_effort(self, leg_acc, torso_acc,k4,k5,k6,k7)
+        effort = get_effort(self, leg_acc, torso_acc,k_4,k_5,k_6,k_7)
         # print(effort,reward,penalty)
-        return k1*reward - k2*penalty - k3*effort
+        return k_1*reward - k_2*penalty - k_3*effort
 
     def get_info(self):
+        """
+        Does nothing right now. Ideally, this would output values which aren't
+        necessarily known to PPO such as separate reward, penalty and effort
+        constituents or potentially the current highest pivot angle attained.
+
+        Returns
+        -------
+        info : dict
+            Doesn't do anything yet.
+
+        """
         return {"empty":None}
 
     def quit_timer(self):
+        """
+        Stops the program when enough time-steps have been done, otherwise
+        increments time by 1.
+
+        Returns
+        -------
+        done : boolean
+            Stops the PPO algorithm when it is finished.
+
+        """
         if self.run_time >= self.run_duration:
             return True
-        else:
-            self.run_time += 1
-            return False
+        self.run_time += 1
+        return False
 
 
-# Fetch pygame events
 def get_events():
+    """
+    Listens to keystrokes for use with manual simulation.
+    If the windows is closed its supposed to quit pygame,
+    but this doesn't work right now.
+
+    Returns
+    -------
+    keys_pressed : array-like
+        A list of booleans representing which keys are being pressed.
+
+    """
     get_event = pygame.event.get()
     for event in get_event:
         if event.type == pygame.QUIT:
@@ -117,8 +232,17 @@ def get_events():
     return pygame.key.get_pressed()
 
 
-# Main loop - actually runs the code
 def main():
+    """
+    Runs the simulation manually, no machine learning here.
+    Instantiates the custom Gym environment, listens for keypresses
+    then sets action based on input.
+
+    Returns
+    -------
+    None.
+
+    """
     # Initialise the simulation:
     environment = CustomEnv()
     environment.init_render()
@@ -132,10 +256,19 @@ def main():
         environment.step(action)
         environment.render()
 
-# --------------------------------------------------------------------
-# PPO stuff
 
-def PPO_main():
+def ppo_main():
+    """
+    Runs the simulation using stable-baselines3 proximal policy optimisation
+    algorithm.
+    Episodes are run for a limited amount of time equal to env.run_duration,
+    then the simulation is run for a set number of episodes.
+
+    Returns
+    -------
+    None.
+
+    """
     env = CustomEnv()
     model = PPO("MlpPolicy",env,verbose=1)
     episodes = 100
@@ -153,11 +286,11 @@ def PPO_main():
     while True:
         action, _states = model.predict(obs)
         print("action:",action)
-        obs, rewards, done, info = env.step(action)
+        obs, rewards = env.step(action)[0:2]
         print("observation:",obs,"rewards:",rewards)
         env.render()
 
 
 if __name__ == "__main__":
     main()
-    #PPO_main()
+    #ppo_main()
