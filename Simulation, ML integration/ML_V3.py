@@ -64,6 +64,7 @@ class CustomEnv(gym.Env):
         return observation
 
     def get_obs(self):
+                #could optimise by making array
         leg_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angle -self.simulation_data["pm_space"].bodies[1].angle)
         leg_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
         leg_angle_acc = (leg_angle_velocity - self.observation[4]) / self.step_length
