@@ -120,6 +120,7 @@ def setup_simulation():
     speeds = [0, 0]
 
     setup = {
+        "phi": -np.pi/6,
         # lengths /cm - innacurate
         "rl": 151 + 7,
         "sl1": 16,
@@ -148,19 +149,19 @@ def setup_simulation():
         "am2": 0.065 + 0.078 * 2 + 0.0185 * 2
     }
     centres = {
-        "rc": (setup["bg"][0], setup["bg"][1] + setup["rl"] / 2),
-        "sc": (setup["bg"][0], setup["bg"][1] + setup["rl"] + setup["sl2"] / 2),
-        "lc": (setup["bg"][0] + setup["sl4"][1], setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["sl4"][0] / 2 + setup["ll1"] / 2),
-        "tc": (setup["bg"][0] - setup["sl3"] / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] / 2 -0.25),
+        "rc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] / 2, setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] / 2),
+        "sc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"], setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + setup["sl2"] / 2),
+        "lc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] + setup["sl4"][1], setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + setup["sl2"] - setup["sl4"][0] / 2 + setup["ll1"] / 2),
+        "tc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] - setup["sl3"] / 2, setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + setup["sl2"] - setup["tl"] / 2 -0.25),
         
-        "hip": (setup["bg"][0] , setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["sl4"][0] /2),
-        "a1c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
-        "a2c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) + setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2)
+        "hip": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] , setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + setup["sl2"] - setup["sl4"][0] /2),
+        # "a1c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
+        # "a2c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) + setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2)
     }
 
     # these add the object to the simulation
     bodies = {
-        "rod": Rod(centres["rc"], (0, setup["rl"] / 2), (0, -setup["rl"] / 2), setup["rm"], pm_space),
+        "rod": Rod(centres["rc"], (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2), setup["rm"], pm_space),
         "swing": Swing(centres["sc"],
                            (0, -setup["sl2"] / 2), (setup["sl1"], -setup["sl2"] / 2),#a1,b1
                            (0, setup["sl2"] / 2), (0, -setup["sl2"] / 2),#a2,b2
@@ -174,13 +175,12 @@ def setup_simulation():
                        (0, -setup["tl"] / 2 +0.25), (0, setup["tl"] / 2 -0.25),#a1,b1
                        6, (0, -2 -setup["tl"] / 2 +0.25), setup["tm"], setup["head"], pm_space),
     
-        "upper_arm": Arm(centres["a1c"], (-setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, -setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
-                          (setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
-                          setup["a1"], pm_space),
-        "lower_arm": Arm(centres["a2c"], (-setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
-                          (setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
-                          setup["a2"], pm_space),
-        # "hand": 
+        # "upper_arm": Arm(centres["a1c"], (-setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, -setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
+        #                   (setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
+        #                   setup["a1"], pm_space),
+        # "lower_arm": Arm(centres["a2c"], (-setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
+        #                   (setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
+        #                   setup["a2"], pm_space), 
     }
 
     # fixed joints of simulation
@@ -189,16 +189,31 @@ def setup_simulation():
                              (0, setup["tl"] / 2), pm_space),
         "front": Pinjoint(bodies["swing"].body, bodies["leg"].body, (setup["sl4"][1], (setup["sl2"] - setup["sl4"][0]) / 2 ),
                               (0, -setup["ll1"] / 2), pm_space),
-        "bottom": Pinjoint(bodies["rod"].body, bodies["swing"].body, (0, setup["rl"] / 2), (0, -setup["sl2"] / 2),
+        "bottom": Pinjoint(bodies["rod"].body, bodies["swing"].body, (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2), (0, -setup["sl2"] / 2),
                                pm_space),
-        "top": Pinjoint(background, bodies["rod"].body, setup["bg"], (0, -setup["rl"] / 2), pm_space),
+        "top": Pinjoint(background, bodies["rod"].body, setup["bg"],
+                        (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), pm_space),
+        # "shoulder": Pinjoint(bodies["torso"].body, bodies["upper_arm"].body,
+        #                      (0, -setup["tl"] / 2 +0.25),
+        #                      (-setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, -setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
+        #                      pm_space),
+        # "elbow": Pinjoint(bodies["upper_arm"].body, bodies["lower_arm"].body,
+        #                   (setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
+        #                   (-setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
+        #                   pm_space),
+        # "wrist": Pinjoint(bodies["lower_arm"].body, bodies["swing"].body,
+        #                   (setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
+        #                   (10, -setup["sl2"] / 2), pm_space)
     }
 
     motors = {
         "back": Simplemotor(bodies["swing"].body, bodies["leg"].body, 0, pm_space),
-        "front": Simplemotor(bodies["swing"].body, bodies["torso"].body, 0, pm_space)
+        "front": Simplemotor(bodies["swing"].body, bodies["torso"].body, 0, pm_space),
+        # "m_shoulder": Simplemotor(bodies["torso"].body, bodies["upper_arm"].body, 0, pm_space),
+        # "m_elbow": Simplemotor(bodies["upper_arm"].body, bodies["lower_arm"].body, 0, pm_space),
+        # "m_wrist": Simplemotor(bodies["lower_arm"].body, bodies["swing"].body, 0, pm_space)
+        
     }
-
     return {"pm_space": pm_space, "motors": motors, "bodies": bodies, "joints": joints, "speeds": speeds}
 
 def perform_action(environment, action, simulation_data):
