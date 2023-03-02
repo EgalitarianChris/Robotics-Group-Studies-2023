@@ -133,8 +133,10 @@ def setup_simulation():
     pm_space.gravity = 0, 981
     background = pm_space.static_body
     speeds = [0, 0]
-
+step_length = 1/ 100
+    
     setup = {
+        "step_length": step_length,
         "phi": -np.pi/6,
         # lengths /cm - innacurate
         "rl": 151 + 7,
