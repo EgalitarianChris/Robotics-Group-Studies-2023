@@ -72,6 +72,20 @@ class Pinjoint:
         joint = pymunk.constraints.PinJoint(body1, body2, con1, con2)
         space.add(joint)
 
+class Pivotjoint:
+    def __init__(self, body1, body2, con1, con2, space):
+        'two bodies and where to connect them by on each body'
+        joint = pymunk.constraints.PinJoint(body1, body2, con1, con2)
+        # joint.collide_bodies = collide
+        space.add(joint)
+
+class RotaryLimitJoint:
+    def __init__(self, body1, body2, min, max, space):
+        'prevents joint exceeding maximum angle'
+        joint = pymunk.constraints.RotaryLimitJoint(body1, body2, min, max)
+        # joint.collide_bodies = collide
+        space.add(joint)
+        
 class Swing:
     def __init__(self,pos, a1, b1, a2, b2, a3, b3, a4, b4, m1, m2, m3, m4, space):
         'position of CoM, a=start, b=end, m=mass, 1/2/3=bar/vertical/base'
@@ -185,14 +199,15 @@ def setup_simulation():
 
     # fixed joints of simulation
     joints = {
-        "back": Pinjoint(bodies["swing"].body, bodies["torso"].body, (0 , setup["sl2"] / 2 - setup["sl4"][0] /2),
+        "back": Pivotjoint(bodies["swing"].body, bodies["torso"].body, (0 , setup["sl2"] / 2 - setup["sl4"][0] /2),
                              (0, setup["tl"] / 2), pm_space),
-        "front": Pinjoint(bodies["swing"].body, bodies["leg"].body, (setup["sl4"][1], (setup["sl2"] - setup["sl4"][0]) / 2 ),
+        "front": Pivotjoint(bodies["swing"].body, bodies["leg"].body, (setup["sl4"][1], (setup["sl2"] - setup["sl4"][0]) / 2 ),
                               (0, -setup["ll1"] / 2), pm_space),
-        "bottom": Pinjoint(bodies["rod"].body, bodies["swing"].body, (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2), (0, -setup["sl2"] / 2),
+        "bottom": Pivotjoint(bodies["rod"].body, bodies["swing"].body, (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2), (0, -setup["sl2"] / 2),
                                pm_space),
-        "top": Pinjoint(background, bodies["rod"].body, setup["bg"],
+        "top": Pivotjoint(background, bodies["rod"].body, setup["bg"],
                         (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), pm_space),
+        "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3, np.pi/3, pm_space)
         # "shoulder": Pinjoint(bodies["torso"].body, bodies["upper_arm"].body,
         #                      (0, -setup["tl"] / 2 +0.25),
         #                      (-setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, -setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
@@ -205,7 +220,6 @@ def setup_simulation():
         #                   (setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2),
         #                   (10, -setup["sl2"] / 2), pm_space)
     }
-
     motors = {
         "back": Simplemotor(bodies["swing"].body, bodies["leg"].body, 0, pm_space),
         "front": Simplemotor(bodies["swing"].body, bodies["torso"].body, 0, pm_space),
