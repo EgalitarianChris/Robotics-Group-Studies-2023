@@ -208,7 +208,7 @@ def perform_action(environment, action, simulation_data):
     torso_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
     
     #arbitrary acceleration, to be changed later (units of change in speed per tick)
-    acceleration = 0.1
+    acceleration = 6
     
     #a version of the input speed with directions included
     signs = [0, 0]
