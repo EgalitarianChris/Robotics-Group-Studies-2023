@@ -61,44 +61,32 @@ import socket, pickle, Encoders
 
 
 def main():
+    
 
-
- TCP_connection, TCP_socket = connect()
-
-
- # model = PPO.load("test_PPO_model_data") - load the trained Machine Learning Agent here
-
-
-
-
-
-
-
- while True:
-
-
-   angle_info = get_angle_info()
-
-
-   Nao_info = get_Nao_info(TCP_connection, TCP_socket)
-
-
-   # action, _states = model.predict(angle_info) - Machine learning agent makes the action decisions here
-
-
-   action = get_action_DUMMY() # - dummy function to send example actions for testing purposes - should be replaced in final build
-
-
-   send(action)
-
-
- TCP_socket.close()
-
-
-  
-
-
- Encoders.close()
+      TCP_connection = connect()
+    
+    
+     # model = PPO.load("test_PPO_model_data") - load the trained Machine Learning Agent here
+    
+      while True:
+    
+    
+         angle_info = get_angle_info()
+         print(angle_info)
+         print('angle info ^')
+         Nao_info = get_NAO_info(TCP_connection)
+         
+    
+         # action, _states = model.predict(angle_info) - Machine learning agent makes the action decisions here
+    
+    
+         action = get_action_DUMMY() # - dummy function to send example actions for testing purposes - should be replaced in final build
+         print(action)
+         send(TCP_connection, action)
+    
+      TCP_connection.close()
+    
+      Encoders.close()
 
 
 
@@ -115,9 +103,7 @@ def main():
 
 
 
-
-
-def connect(HOST = '192.168.1.4', PORT = 10000):
+def connect(HOST = '192.168.1.7', PORT = 10000): #use 192.168.1.7
 
 
    # The server's IP address: 192.168.1.100   For testing on local: 147.188.37.23
@@ -125,16 +111,9 @@ def connect(HOST = '192.168.1.4', PORT = 10000):
 
     # The port used by the server: 10000
 
-
-
-
-
-
+    
 
    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-
- 
 
 
    s.connect((HOST, PORT))
@@ -142,15 +121,7 @@ def connect(HOST = '192.168.1.4', PORT = 10000):
 
    print('has connected')
 
-
-   conn, addr = s.accept()
-
-
-   return conn, s
-
-
-
-
+   return s
 
 
 
@@ -162,70 +133,45 @@ def connect(HOST = '192.168.1.4', PORT = 10000):
 
 def get_angle_info():
 
-
    angle_info = Encoders.sample() # might have to change encoders.py to change iteration rate
    large_encoder_angle = angle_info[0]
    top = 0.5*(angle_info[1]+angle_info[4])
    bottom = 0.5*(angle_info[2] + angle_info[3])
    small_encoder_angle = top + bottom
    
- return [large_encoder_angle,small_encoder_angle]
-
-
-
-
-
-
-
-
-
+   return [large_encoder_angle,small_encoder_angle]
 
 
 
 # retrieve the NAO information in the [hip_angle,knee_angle] format for the ML agent to see
 
 
-def get_NAO_info(TCP_connection, TCP_socket):
+def get_NAO_info(TCP_connection):
 
 
    from_server = pickle.loads(TCP_connection.recv(1024))
+   print(from_server)
 
+   #[hip_angle,knee_angle] = from_server
+   nao_data = from_server
 
-   commands = from_server
-
-
-   [hip_angle,knee_angle] = from_server
-
-
-      
-
-
- return [hip_angle,knee_angle]
-
-
-
-
-
-
-
-
-
-
+     
+   return nao_data
 
 
 # send the action the agent has made to the Control_API.py instance communicating with NAO
 
 
-def send(TCP_connection, action)
+def send(TCP_connection, action):
 
 
-   TCP_connection.recv(1024)
+  # TCP_connection.recv(1024)
 
 
-   TCP_connection.sendall(action)# Sends back the actions
+   TCP_connection.sendall(pickle.dumps(action))# Sends back the actions
 
 
- pass
+   pass
 
 
 
@@ -244,5 +190,10 @@ def send(TCP_connection, action)
 def get_action_DUMMY():
 
 
- return [1,2,3,4]
+    return [1,2,3,4]
+
+
+main()
+
+
 
