@@ -224,22 +224,10 @@ def perform_action(environment, action, simulation_data):
     #arbitrary acceleration, to be changed later (units of change in speed per tick)
     acceleration = 6
     
-    #a version of the input speed with directions included
-    signs = [0, 0]
-    
     #defining the sign of the leg motion so if the angle of the leg is more positive (anti-clockwise) than the target angle the motion will be a negative (clockwise rotation)
-    if action[0] < leg_angle:
-        signs[0] = - (np.pi/180) * action[1]
-    #if the angle of the leg is more clockwise this will result in anticlockwise rotation    
-    else:
-        signs[0] = (np.pi/180) * action[1]
+    signs = np.sign(np.array([action[0], action[2]]) - np.array([leg_angle, torso_angle])) * (np.pi / 180) * [action[1], action[3]]
+    #if the angle of the leg is more clockwise this will result in anticlockwise rotation, signs is just action with direction included. 
     
-    #same as above but for the torso
-    if action[2] < torso_angle:
-        signs[1] = - (np.pi/180) * action[3]
-    else:
-        signs[1] = (np.pi/180) * action[3]
-        
     #if the leg is greater than 5 degrees from the target
     if abs(action[0] - leg_angle) >= 5:
         #if the actual rotation speed is equal to the intended speed then pass
