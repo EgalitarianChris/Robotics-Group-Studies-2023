@@ -75,7 +75,7 @@ class Pinjoint:
 class Pivotjoint:
     def __init__(self, body1, body2, con1, con2, space):
         'two bodies and where to connect them by on each body'
-        joint = pymunk.constraints.PinJoint(body1, body2, con1, con2)
+        joint = pymunk.constraints.PivotJoint(body1, body2, con1, con2)
         # joint.collide_bodies = collide
         space.add(joint)
 
