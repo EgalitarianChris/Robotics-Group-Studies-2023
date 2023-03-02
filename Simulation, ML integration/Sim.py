@@ -213,8 +213,7 @@ def setup_simulation():
         # "m_elbow": Simplemotor(bodies["upper_arm"].body, bodies["lower_arm"].body, 0, pm_space),
         # "m_wrist": Simplemotor(bodies["lower_arm"].body, bodies["swing"].body, 0, pm_space)
         
-    }
-    return {"pm_space": pm_space, "motors": motors, "bodies": bodies, "joints": joints, "speeds": speeds}
+    }return {"pm_space": pm_space, "motors": motors, "bodies": bodies, "joints": joints, "speeds": speeds, "setup": setup}
 
 def perform_action(environment, action, simulation_data):
     
