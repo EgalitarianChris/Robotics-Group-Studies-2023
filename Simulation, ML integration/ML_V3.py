@@ -31,22 +31,7 @@ class CustomEnv(gym.Env):
     # The actual bit where the simulation happens
     def step(self, action=np.zeros((4), dtype=np.single)):
         action =+ self.last_action
-        if action[0] >= 90:
-            action[0] = 90
-        if action[0] <= -45:
-            action[0] = -45
-        if action[1] >= 360:
-            action[1] = 360
-        if action[1] <= 0:
-            action[1] = 0
-        if action[2] >= 128:
-            action[2] = 128
-        if action[2] <= 63:
-            action[2] = 63
-        if action[3] >= 360:
-            action[3] = 360
-        if action[3] <= 0:
-            action[3] = 0
+        np.clip(action, [-45, 0, 63, 0], [90, 360, 128, 360]) #limits each value of action to be more realistic
         self.simulation_data = perform_action(self, action, self.simulation_data)
         self.last_action = action
         self.simulation_data["pm_space"].step(self.step_length) # might want to include a bit of random variation to the step duration to help train the agent for running on NAO
