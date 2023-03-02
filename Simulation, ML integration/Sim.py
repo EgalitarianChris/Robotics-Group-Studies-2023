@@ -73,9 +73,10 @@ class Pinjoint:
         space.add(joint)
 
 class Pivotjoint:
-    def __init__(self, body1, body2, con1, con2, space):
-        'two bodies and where to connect them by on each body'
+    def __init__(self, body1, body2, con1, con2, space, err = pow(1-0.1,30)):
+        'two bodies and where to connect them by on each body, changing error bias allows speed change for simulation'
         joint = pymunk.constraints.PivotJoint(body1, body2, con1, con2)
+        joint.error_bias = pow(1-0.4, 60)
         # joint.collide_bodies = collide
         space.add(joint)
 
