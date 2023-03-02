@@ -18,7 +18,7 @@ class CustomEnv(gym.Env):
         self.run_duration = 10000
         self.run_time = 0
         self.reward = 0
-        self.step_length = 1 / 1000
+        self.step_length = 1 / 100
         self.observation = np.zeros(12)
         self.last_action = np.array([0,0,0,0])
         a = self.step_length*1000
@@ -94,8 +94,6 @@ class CustomEnv(gym.Env):
         leg_acc, torso_acc = observation[7:9]
         reward = top_angle * top_angle
         penalty = combined_joint_angle * combined_joint_angle
-        leg_acc = 0
-        torso_acc = 0
         effort = get_effort(self, leg_acc, torso_acc,k4,k5,k6,k7)
         # print(effort,reward,penalty)
         return k1*reward - k2*penalty - k3*effort
@@ -125,7 +123,7 @@ def main():
     # Initialise the simulation:
     environment = CustomEnv()
     environment.init_render()
-    #check_env(environment)
+
     # Run the simulation:
     while True:
         keys_pressed = get_events()
@@ -135,7 +133,8 @@ def main():
         environment.step(action)
         environment.render()
 
-# main()
+
+main()
 
 # --------------------------------------------------------------------
 # PPO stuff
@@ -161,4 +160,4 @@ def PPO_main():
         print("observation:",obs,"rewards:",rewards)
         env.render()
 
-PPO_main()
+# PPO_main()
