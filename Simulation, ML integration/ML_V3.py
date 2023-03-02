@@ -18,20 +18,16 @@ class CustomEnv(gym.Env):
         self.run_duration = 10000
         self.run_time = 0
         self.reward = 0
-        self.step_length = 1 / 100
+        self.step_length = 1 / 1000
         self.observation = np.zeros(12)
-        self.last_action = np.array([0,0,0,0])
-        a = self.step_length*1000
 
-        self.action_space = spaces.Box(np.array([-a, -5*a, -a, -5*a]), np.array([a, 5*a, a, 5*a]), dtype=float)
+        self.action_space = spaces.Box(np.array([-45, 0, 63, 0]), np.array([90, 360, 128, 360]), dtype=float)
         self.observation_space = spaces.Box(np.array([-180, -180, -180, -180, -360, -360, -180, -180, -100, -100, -100, -100]), np.array([180, 180, 180, 180, 360, 360, 180, 180, 100, 100, 100, 100]), dtype=np.float32)
 
         self.simulation_data = setup_simulation()
 
     # The actual bit where the simulation happens
     def step(self, action=np.zeros((4), dtype=np.single)):
-        action =+ self.last_action
-        np.clip(action, [-45, 0, 63, 0], [90, 360, 128, 360]) #limits each value of action to be more realistic
         self.simulation_data = perform_action(self, action, self.simulation_data)
         self.last_action = action
         self.simulation_data["pm_space"].step(self.step_length) # might want to include a bit of random variation to the step duration to help train the agent for running on NAO
