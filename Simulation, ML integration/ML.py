@@ -230,19 +230,24 @@ def main():
         environment.render()
 
 
-def ppo_main():
+def ppo_main(filename, episodes = 3000):
     """
     Runs the simulation using stable-baselines3 proximal policy optimisation
     algorithm.
     Episodes are run for a limited amount of time equal to env.run_duration,
     then the simulation is run for a set number of episodes.
+    Parameters
+    ----------
+    filename : string
+        DESCRIPTION. name of file
+    episodes : int
+        DESCRIPTION. number of episodes
     Returns
     -------
     None.
     """
     env = CustomEnv()
     model = PPO("MlpPolicy",env,verbose=1)
-    episodes = 1000
     model.learn(total_timesteps= env.run_duration * episodes)
     model.save("test_PPO_model_data")
     print("model saved\n---------------------------------------------------------")
@@ -261,7 +266,67 @@ def ppo_main():
         print("observation:",obs,"rewards:",rewards)
         env.render()
 
+def run_learned(filename = "test_PPO_model_data"):
+    '''
+    Runs the most recently learned PPO-model
+
+    Parameters
+    ----------
+    filename - string
+    
+    Returns
+    -------
+    None.
+
+    '''
+    model = PPO.load(filename)
+    env = CustomEnv()
+    obs = env.reset()
+    env.init_render()
+    while True:
+        action, _states = model.predict(obs)
+        print("action:",action)
+        obs, rewards = env.step(action)[0:2]
+        print("observation:",obs,"rewards:",rewards)
+        env.render()
+
+def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
+    '''
+    Allows you to continue learning with a model that some training has already been done with
+
+    Parameters
+    ----------
+    filename : string
+        DESCRIPTION. name of file
+    episodes : int
+        DESCRIPTION. number of episodes
+    Returns
+    -------
+    None.
+
+    '''
+    model = PPO.load(filename)
+    env = CustomEnv()
+    model.learn(total_timesteps= env.run_duration * episodes)
+    model.save(filename)
+    print("model saved\n---------------------------------------------------------")
+    del model
+
+    model = PPO.load(filename)
+    print("model loaded\n---------------------------------------------------------")
+    obs = env.reset()
+    print("initialising renderer")
+    env.init_render()
+    print("starting while loop (running the trained model)")
+    while True:
+        action, _states = model.predict(obs)
+        print("action:",action)
+        obs, rewards = env.step(action)[0:2]
+        print("observation:",obs,"rewards:",rewards)
+        env.render()
 
 if __name__ == "__main__":
     # main()
-    ppo_main()
+    # ppo_main()
+    # run_learned()
+    continue_learning()
