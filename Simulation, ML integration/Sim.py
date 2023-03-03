@@ -234,7 +234,10 @@ def setup_simulation():
     return {"pm_space": pm_space, "motors": motors, "bodies": bodies, "joints": joints, "speeds": speeds, "setup": setup}
 
 def perform_action(environment, action, simulation_data):
-    
+    action = np.array([action[0]*63 + 32,
+                       action[1]*190.3 + 190.3,
+                       action[2]*32.5 + 5.5,
+                       action[3]*190.3 + 190.3])
     #get angle of leg and torso relative to the verticle in degrees
     leg_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[2].angle - environment.simulation_data["pm_space"].bodies[1].angle)
     torso_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
@@ -315,22 +318,21 @@ def get_action(keytouple):
     # FOR MANUAL CONTROL OF THE SIMULATION (RETURN ACTION ARRAYS FROM KEY PRESSES)
 
   if keytouple[pygame.K_l]:
-        leg_action = np.array([90, 360, 0, 0])
+        leg_action = np.array([1, 1, 0, 0])
 
   elif keytouple[pygame.K_j]:
-      leg_action = np.array([-45, 360, 0, 0])
+      leg_action = np.array([-1, 1, 0, 0])
 
   else:
-      leg_action = np.array([0, 0, 0, 0])
+      leg_action = np.array([0, -1, 0, 0])
         
   if keytouple[pygame.K_d]:
-      torso_action = np.array([0, 0, 60, 360])
+      torso_action = np.array([0, 0, 1, 1])
 
   elif keytouple[pygame.K_a]:
-      torso_action = np.array([0, 0, -45, 360])
+      torso_action = np.array([0, 0, -1, 1])
 
   else:
-      torso_action = np.array([0, 0, 0, 0])
+      torso_action = np.array([0, 0, 0, -1])
     
   return leg_action + torso_action
-
