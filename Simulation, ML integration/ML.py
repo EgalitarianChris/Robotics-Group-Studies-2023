@@ -7,7 +7,7 @@ import numpy as np
 import gym
 from gym import spaces
 from pymunk.pygame_util import DrawOptions
-#from stable_baselines3.common.env_checker import check_env
+# from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO
 
 # Create gym environment - Contains the machine learning code and the simulation code:
@@ -30,7 +30,6 @@ class CustomEnv(gym.Env):
         self.simulation_data = setup_simulation()
         self.step_length = self.simulation_data["setup"]["step_length"]
         self.run_duration = 10 / self.step_length
-        self.last_action = np.zeros((4), dtype=np.single)
         self.window = None
         self.options = None
 
@@ -92,7 +91,7 @@ class CustomEnv(gym.Env):
         self.window.fill((255, 255, 255))
         self.simulation_data["pm_space"].debug_draw(self.options)
         pygame.display.update()
-        time.sleep(0.01)
+        time.sleep(self.step_length)
 
     # Reset the simulation for the next training run (NOT RELEVENT TO SIMULATIONS)
     def reset(self):
@@ -243,7 +242,7 @@ def ppo_main():
     """
     env = CustomEnv()
     model = PPO("MlpPolicy",env,verbose=1)
-    episodes = 100
+    episodes = 1000
     model.learn(total_timesteps= env.run_duration * episodes)
     model.save("test_PPO_model_data")
     print("model saved\n---------------------------------------------------------")
@@ -264,5 +263,5 @@ def ppo_main():
 
 
 if __name__ == "__main__":
-    main()
-    #ppo_main()
+    # main()
+    ppo_main()
