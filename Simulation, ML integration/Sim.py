@@ -87,6 +87,14 @@ class RotaryLimitJoint:
         # joint.collide_bodies = collide
         space.add(joint)
         
+class Dampedrotaryspring:
+    def __init__(self, body1, body2, angle, stiff, damp, space):
+        'two bodies and, a rest angle, a stiffness and a damping factor.'
+        # only really used for top joint and it wouldnt work well for others,
+        # stiffness and damping require tuning
+        joint = pymunk.constraints.DampedRotarySpring(body1, body2, angle, stiff, damp)
+        space.add(joint)
+        
 class Swing:
     def __init__(self,pos, a1, b1, a2, b2, a3, b3, a4, b4, m1, m2, m3, m4, space):
         'position of CoM, a=start, b=end, m=mass, 1/2/3=bar/vertical/base'
@@ -211,6 +219,7 @@ def setup_simulation():
         "top": Pivotjoint(background, bodies["rod"].body, setup["bg"],
                         (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), pm_space),
         "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3, np.pi/3, pm_space)
+        "tip": Dampedrotaryspring(background, bodies["rod"].body, setup["phi"], 100, 10000, pm_space)
         # "shoulder": Pinjoint(bodies["torso"].body, bodies["upper_arm"].body,
         #                      (0, -setup["tl"] / 2 +0.25),
         #                      (-setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, -setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
