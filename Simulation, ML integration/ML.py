@@ -19,7 +19,7 @@ class CustomEnv(gym.Env):
         self.reward = 0
         # self.step_length = 1 / 100
         self.observation = np.zeros(12)
-        #[-31, 0, -27, 0]    [95, 380.6, 128, 380.6]
+        #[-31, 0, -27, 0]    [95, 380.6, 38, 380.6]
         self.action_space = spaces.Box(np.array([-1, -1, -1, -1]),
                                        np.array([1, 1, 1, 1]),
                                        dtype=np.float32)
@@ -34,16 +34,14 @@ class CustomEnv(gym.Env):
         self.window = None
         self.options = None
 
-    def step(self, action=np.array([0, -1, 0, -1]), dtype=np.single):
+    def step(self, action=np.zeros(4), dtype=np.single):
         """
         The actual bit where the simulation happens. Ticks everything forward by one timestep
         and returns values which get passed into PPO.
-
         Parameters
         ----------
         action : array-like
             A normalised array of how the arms and legs intend to move. The default is an array of zeros.
-
         Returns
         -------
         observation : array-like
@@ -54,13 +52,8 @@ class CustomEnv(gym.Env):
             Stops the PPO algorithm when it is finished, determined from quit_timer().
         info : dict
             Doesn't do anything yet.
-
         """
-        action1 = np.array([action[0]*63+32,
-                            action[1]*190.3+190.3,
-                            action[2]*77.5+50.5,
-                            action[3]*190.3+190.3])
-        self.simulation_data = perform_action(self, action1, self.simulation_data)
+        self.simulation_data = perform_action(self, action, self.simulation_data)
         self.last_action = action
         self.simulation_data["pm_space"].step(self.step_length)
         # Potentially add random variation in step duration to help train for running on NAO
@@ -78,11 +71,9 @@ class CustomEnv(gym.Env):
         """
         Initialises the renderer, is only called to visualise the simulation,
         it isn't necessary for the machine learning. (NOT RELEVENT TO SIMULATIONS)
-
         Returns
         -------
         None.
-
         """
         pygame.init()
         self.window = pygame.display.set_mode((1000, 500))
@@ -93,11 +84,9 @@ class CustomEnv(gym.Env):
     def render(self):
         """
         Renders the state of the simulation (NOT RELEVENT TO SIMULATIONS)
-
         Returns
         -------
         None.
-
         """
         get_events()
         self.window.fill((255, 255, 255))
@@ -109,12 +98,10 @@ class CustomEnv(gym.Env):
     def reset(self):
         """
         Used to initiate a new episode, outputting final observations.
-
         Returns
         -------
         observation : array-like
             Angles and velocities in the swing which gets passed into PPO.
-
         """
         self.run_time = 0
         self.reward = 0
@@ -126,12 +113,10 @@ class CustomEnv(gym.Env):
         """
         Calculates leg, torso, top pivot and combined joint angles and velocities.
         Gets passed into observation array for PPO to use.
-
         Returns
         -------
         observation : array-like
             Angles and velocities in the swing which gets passed into PPO.
-
         """
         leg_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angle - self.simulation_data["pm_space"].bodies[1].angle)
         leg_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
@@ -159,18 +144,15 @@ class CustomEnv(gym.Env):
         Takes in observations and uses them to calculate a reward function.
         k_1 through k_7 are parameters used to tweak the importance of different
         behaviour in the neural network.
-
         Parameters
         ----------
         observation : array-like
             Angles and velocities in the swing which gets passed into PPO.
-
         Returns
         -------
         reward : float
             A score of how successfully the robot is swinging, PPO attempts to
             maximise this.
-
         """
         k_1, k_2, k_3, k_4, k_5, k_6, k_7 = 1, 0, 0, 0, 0, 0, 0
         top_angle, combined_joint_angle  = observation[2:4]
@@ -187,12 +169,10 @@ class CustomEnv(gym.Env):
         Does nothing right now. Ideally, this would output values which aren't
         necessarily known to PPO such as separate reward, penalty and effort
         constituents or potentially the current highest pivot angle attained.
-
         Returns
         -------
         info : dict
             Doesn't do anything yet.
-
         """
         return {"empty":None}
 
@@ -200,12 +180,10 @@ class CustomEnv(gym.Env):
         """
         Stops the program when enough time-steps have been done, otherwise
         increments time by 1.
-
         Returns
         -------
         done : boolean
             Stops the PPO algorithm when it is finished.
-
         """
         if self.run_time >= self.run_duration:
             return True
@@ -218,12 +196,10 @@ def get_events():
     Listens to keystrokes for use with manual simulation.
     If the windows is closed its supposed to quit pygame,
     but this doesn't work right now.
-
     Returns
     -------
     keys_pressed : array-like
         A list of booleans representing which keys are being pressed.
-
     """
     get_event = pygame.event.get()
     for event in get_event:
@@ -237,11 +213,9 @@ def main():
     Runs the simulation manually, no machine learning here.
     Instantiates the custom Gym environment, listens for keypresses
     then sets action based on input.
-
     Returns
     -------
     None.
-
     """
     # Initialise the simulation:
     environment = CustomEnv()
@@ -263,11 +237,9 @@ def ppo_main():
     algorithm.
     Episodes are run for a limited amount of time equal to env.run_duration,
     then the simulation is run for a set number of episodes.
-
     Returns
     -------
     None.
-
     """
     env = CustomEnv()
     model = PPO("MlpPolicy",env,verbose=1)
