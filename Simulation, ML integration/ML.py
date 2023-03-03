@@ -34,7 +34,7 @@ class CustomEnv(gym.Env):
         self.window = None
         self.options = None
 
-    def step(self, action=np.zeros((4), dtype=np.single)):
+    def step(self, action=np.array([0, -1, 0, -1]), dtype=np.single):
         """
         The actual bit where the simulation happens. Ticks everything forward by one timestep
         and returns values which get passed into PPO.
