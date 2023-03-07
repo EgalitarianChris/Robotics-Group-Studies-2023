@@ -141,10 +141,11 @@ def setup_simulation():
     pm_space.gravity = 0, 981
     background = pm_space.static_body
     speeds = [0, 0]
-    step_length = 1/ 10
+    step_length = 1/ 100
     
     setup = {
         "step_length": step_length,
+        "sim_steps_per_decision": 10,
         "phi": 0,
         # lengths /cm - innacurate
         "rl": 151 + 7,
@@ -218,7 +219,7 @@ def setup_simulation():
                                pm_space),
         "top": Pivotjoint(background, bodies["rod"].body, setup["bg"],
                         (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), pm_space),
-        "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3, np.pi/3, pm_space),
+        "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3 -setup["phi"], np.pi/3 -setup["phi"], pm_space),
         "tip": Dampedrotaryspring(background, bodies["rod"].body, setup["phi"], 100, 10000, pm_space)
         # "shoulder": Pinjoint(bodies["torso"].body, bodies["upper_arm"].body,
         #                      (0, -setup["tl"] / 2 +0.25),
@@ -272,7 +273,7 @@ def perform_action(environment, action, simulation_data):
 
     
     if action[0] > 0:
-        if action[0] >= leg_angle + (time_needed_l * (180/np.pi) * environment.simulation_data["speeds"][0]*environment.simulation_data["setup"]["step_length"]):
+        if action[0] >= leg_angle + (time_needed_l * (180/np.pi) * environment.simulation_data["speeds"][0]*environment.simulation_data["setup"]["step_length"]*environment.simulation_data["setup"]["sim_steps_per_decision"]):
             if environment.simulation_data["speeds"][0] == signs[0]:
                 pass
             elif environment.simulation_data["speeds"][0] < signs[0]:
@@ -288,7 +289,7 @@ def perform_action(environment, action, simulation_data):
                 environment.simulation_data["speeds"][0] = 0
     
     elif action[0] < 0:
-        if action[0] <= leg_angle + (time_needed_l * (180/np.pi) * environment.simulation_data["speeds"][0]*environment.simulation_data["setup"]["step_length"]):
+        if action[0] <= leg_angle + (time_needed_l * (180/np.pi) * environment.simulation_data["speeds"][0]*environment.simulation_data["setup"]["step_length"]*environment.simulation_data["setup"]["sim_steps_per_decision"]):
             if environment.simulation_data["speeds"][0] == signs[0]:
                 pass
             elif environment.simulation_data["speeds"][0] < signs[0]:
@@ -316,7 +317,7 @@ def perform_action(environment, action, simulation_data):
     
     
     if action[2] > 0:
-        if action[2] >= torso_angle + (time_needed_t * (180/np.pi) * environment.simulation_data["speeds"][1]*environment.simulation_data["setup"]["step_length"]):
+        if action[2] >= torso_angle + (time_needed_t * (180/np.pi) * environment.simulation_data["speeds"][1]*environment.simulation_data["setup"]["step_length"]*environment.simulation_data["setup"]["sim_steps_per_decision"]):
             if environment.simulation_data["speeds"][1] == signs[1]:
                 pass
             elif environment.simulation_data["speeds"][1] < signs[1]:
@@ -332,7 +333,7 @@ def perform_action(environment, action, simulation_data):
                 environment.simulation_data["speeds"][1] = 0
     
     elif action[2] < 0:
-        if action[2] <= torso_angle + (time_needed_t * (180/np.pi) * environment.simulation_data["speeds"][1]*environment.simulation_data["setup"]["step_length"]):
+        if action[2] <= torso_angle + (time_needed_t * (180/np.pi) * environment.simulation_data["speeds"][1]*environment.simulation_data["setup"]["step_length"]*environment.simulation_data["setup"]["sim_steps_per_decision"]):
             if environment.simulation_data["speeds"][1] == signs[1]:
                 pass
             elif environment.simulation_data["speeds"][1] < signs[1]:
