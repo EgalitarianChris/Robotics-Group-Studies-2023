@@ -25,7 +25,7 @@ class CustomEnv(gym.Env):
                                        dtype=np.float32)
         self.observation_space = spaces.Box(np.array([-180, -180, -180, -180, -360, -360, -180, -180]),
                                             np.array([180, 180, 180, 180, 360, 360, 180, 180]),
-                                            dtype=np.float32)
+                                            dtype=np.float64)
         self.simulation_data = setup_simulation()
         self.step_length = self.simulation_data["setup"]["step_length"] * self.sim_steps_per_decision
         self.run_duration = self.realtime_ep_duration / self.step_length
