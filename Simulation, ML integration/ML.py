@@ -305,8 +305,8 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
     None.
 
     '''
-    model = PPO.load(filename)
     env = CustomEnv()
+    model = PPO.load(filename, env)
     model.learn(total_timesteps= env.run_duration * episodes)
     model.save(filename)
     print("model saved\n---------------------------------------------------------")
