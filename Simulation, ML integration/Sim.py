@@ -247,62 +247,115 @@ def perform_action(environment, action, simulation_data):
                        action[1]*190.3 + 190.3,
                        action[2]*32.5 + 5.5,
                        action[3]*190.3 + 190.3])
+    
     #get angle of leg and torso relative to the verticle in degrees
     leg_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[2].angle - environment.simulation_data["pm_space"].bodies[1].angle)
     torso_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
-    
+
     #arbitrary acceleration, to be changed later (units of change in speed per tick)
-    acceleration = 6
+    acceleration = 0.5
     
-    #defining the sign of the leg motion so if the angle of the leg is more positive (anti-clockwise) than the target angle the motion will be a negative (clockwise rotation)
+    #target speeds but with directions defined aswell
     signs = np.sign(np.array([action[0], action[2]]) - np.array([leg_angle, torso_angle])) * (np.pi / 180) * [action[1], action[3]]
-    #if the angle of the leg is more clockwise this will result in anticlockwise rotation, signs is just action with direction included. 
     
-    #if the leg is greater than 5 degrees from the target
-    if abs(action[0] - leg_angle) >= 5:
-        #if the actual rotation speed is equal to the intended speed then pass
+    #no. of timesteps needed to slow down from a given speed
+    if environment.simulation_data["speeds"][0] == 0:
+        time_needed_l = 0
+    else:
+        time_needed_l = abs(environment.simulation_data["speeds"][0])/acceleration
+        
+    if environment.simulation_data["speeds"][1] == 0:
+        time_needed_t = 0
+    else:
+        time_needed_t = abs(environment.simulation_data["speeds"][1])/acceleration
+
+
+    
+    if action[0] > 0:
+        if action[0] >= leg_angle + (time_needed_l * (180/np.pi) * environment.simulation_data["speeds"][0]*environment.simulation_data["setup"]["step_length"]):
+            if environment.simulation_data["speeds"][0] == signs[0]:
+                pass
+            elif environment.simulation_data["speeds"][0] < signs[0]:
+                environment.simulation_data["speeds"][0] += acceleration
+            elif environment.simulation_data["speeds"][0] > signs[0]:
+                environment.simulation_data["speeds"][0] -= acceleration
+        else:
+            if environment.simulation_data["speeds"][0] > 0.1:
+                  environment.simulation_data["speeds"][0] -= acceleration
+            elif environment.simulation_data["speeds"][0] < -0.1:
+                  environment.simulation_data["speeds"][0] += acceleration
+            else:
+                environment.simulation_data["speeds"][0] = 0
+    
+    elif action[0] < 0:
+        if action[0] <= leg_angle + (time_needed_l * (180/np.pi) * environment.simulation_data["speeds"][0]*environment.simulation_data["setup"]["step_length"]):
+            if environment.simulation_data["speeds"][0] == signs[0]:
+                pass
+            elif environment.simulation_data["speeds"][0] < signs[0]:
+                environment.simulation_data["speeds"][0] += acceleration
+            elif environment.simulation_data["speeds"][0] > signs[0]:
+                environment.simulation_data["speeds"][0] -= acceleration
+        else:
+            if environment.simulation_data["speeds"][0] > 0.1:
+                  environment.simulation_data["speeds"][0] -= acceleration
+            elif environment.simulation_data["speeds"][0] < -0.1:
+                  environment.simulation_data["speeds"][0] += acceleration
+            else:
+                environment.simulation_data["speeds"][0] = 0
+            
+    else:
         if environment.simulation_data["speeds"][0] == signs[0]:
             pass
-        #if the actual speed is less than the intended speed increase the actual speed by a value of acceleration
         elif environment.simulation_data["speeds"][0] < signs[0]:
             environment.simulation_data["speeds"][0] += acceleration
-        #if the actual speed is greater than the intended speed decrease the speed
         elif environment.simulation_data["speeds"][0] > signs[0]:
             environment.simulation_data["speeds"][0] -= acceleration
-         
-    #if the leg is within 5 degrees of the target angle
-    else:
-        #if the speed is positive (within a 0.2 range of 0) decrease it by a value of acceleration
-        if environment.simulation_data["speeds"][0] > 0.1:
-              environment.simulation_data["speeds"][0] -= acceleration
-        #if the speed is negative (again within a threshold) increase it by acceleration
-        elif environment.simulation_data["speeds"][0] < -0.1:
-              environment.simulation_data["speeds"][0] += acceleration
-        #if the speed is close to 0 set it to 0 to minimise overshooting through fluctuations
-        else:
-            environment.simulation_data["speeds"][0] = 0
         
     #add a motor to the leg each tick with a speed adjusted in the above functions
     add_motor_l(simulation_data, environment.simulation_data["speeds"][0])
     
     
-    #repeat of the above but for the torso
-    if abs(action[2] - torso_angle) >= 5:
+    if action[2] > 0:
+        if action[2] >= torso_angle + (time_needed_t * (180/np.pi) * environment.simulation_data["speeds"][1]*environment.simulation_data["setup"]["step_length"]):
+            if environment.simulation_data["speeds"][1] == signs[1]:
+                pass
+            elif environment.simulation_data["speeds"][1] < signs[1]:
+                environment.simulation_data["speeds"][1] += acceleration
+            elif environment.simulation_data["speeds"][1] > signs[1]:
+                environment.simulation_data["speeds"][1] -= acceleration
+        else:
+            if environment.simulation_data["speeds"][1] > 0.1:
+                  environment.simulation_data["speeds"][1] -= acceleration
+            elif environment.simulation_data["speeds"][1] < -0.1:
+                  environment.simulation_data["speeds"][1] += acceleration
+            else:
+                environment.simulation_data["speeds"][1] = 0
+    
+    elif action[2] < 0:
+        if action[2] <= torso_angle + (time_needed_t * (180/np.pi) * environment.simulation_data["speeds"][1]*environment.simulation_data["setup"]["step_length"]):
+            if environment.simulation_data["speeds"][1] == signs[1]:
+                pass
+            elif environment.simulation_data["speeds"][1] < signs[1]:
+                environment.simulation_data["speeds"][1] += acceleration
+            elif environment.simulation_data["speeds"][1] > signs[1]:
+                environment.simulation_data["speeds"][1] -= acceleration
+        else:
+            if environment.simulation_data["speeds"][1] > 0.1:
+                  environment.simulation_data["speeds"][1] -= acceleration
+            elif environment.simulation_data["speeds"][1] < -0.1:
+                  environment.simulation_data["speeds"][1] += acceleration
+            else:
+                environment.simulation_data["speeds"][1] = 0
+            
+    else:
         if environment.simulation_data["speeds"][1] == signs[1]:
             pass
         elif environment.simulation_data["speeds"][1] < signs[1]:
             environment.simulation_data["speeds"][1] += acceleration
         elif environment.simulation_data["speeds"][1] > signs[1]:
             environment.simulation_data["speeds"][1] -= acceleration
-            
-    else:
-        if environment.simulation_data["speeds"][1] > 0.1:
-              environment.simulation_data["speeds"][1] -= acceleration
-        elif environment.simulation_data["speeds"][1] < -0.1:
-              environment.simulation_data["speeds"][1] += acceleration
-        else:
-            environment.simulation_data["speeds"][1] = 0
-         
+        
+    #add a motor to the leg each tick with a speed adjusted in the above functions
     add_motor_t(simulation_data, environment.simulation_data["speeds"][1])
     
     return simulation_data
