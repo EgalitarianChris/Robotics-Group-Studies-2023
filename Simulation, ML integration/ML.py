@@ -78,7 +78,7 @@ class CustomEnv(gym.Env):
         self.window = pygame.display.set_mode((1000, 500))
         self.simulation_data["pm_space"].gravity = 0, 981
         self.options = DrawOptions(self.window)
-        #self.clock = pygame.time.Clock()
+        self.clock = pygame.time.Clock()
 
     def render(self):
         """
@@ -91,7 +91,7 @@ class CustomEnv(gym.Env):
         self.window.fill((255, 255, 255))
         self.simulation_data["pm_space"].debug_draw(self.options)
         pygame.display.update()
-        time.sleep(self.step_length)
+        self.clock.tick(1/self.step_length)
 
     # Reset the simulation for the next training run (NOT RELEVENT TO SIMULATIONS)
     def reset(self):
