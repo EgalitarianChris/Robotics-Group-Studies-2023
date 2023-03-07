@@ -25,12 +25,12 @@ def main(PORT_NUMBER = 10000,NAO_IP = ""): # NAO IP 192.168.1.3
   NAO_connection = NAO_connect(NAO_IP)
 
   while True:
-    NAO_info = get_NAO_info(NAO_connection)
-    #NAO_info = 100 used for testing
+    #NAO_info = get_NAO_info(NAO_connection)
+    NAO_info = 100 #used for testing
     send(NAO_info, TCP_socket, TCP_connection)
     action = get_action(TCP_connection, TCP_socket)
     move_NAO(action)
-    #NAO_info = get_NAO_info(NAO_connection)
+   
     
     
     
@@ -38,30 +38,15 @@ def main(PORT_NUMBER = 10000,NAO_IP = ""): # NAO IP 192.168.1.3
 
 # connect to NAO using its IP and port number and return the connection variable
 def NAO_connect(NAO_IP):
-    try:
-        motionProxy = ALProxy("ALMotion", NAO_IP, 9559)
-    except Exception,e:
-        print "Could not create proxy to ALMotion"
-        print "Error was: ",e
-        sys.exit(1)
-  return motionProxy
+  return "Nao connect"
 
 # take the action in the [hip_angle,hip_angle_speed,knee_angle,knee_angle_speed] format and turn this into movement on NAO
-def move_NAO(action, motionProxy):
-    
-    motionProxy.setStiffnesses("Body", 1.0)
-
-    # Example showing how to set angles, using a fraction of max speed
-    names  = ["LKneePitch", "RKneePitch"]
-    angles  = [knee_angle, knee_angle]
-    fractionMaxSpeed  = knee_angle_speed
-    motionProxy.setAngles(names, angles, fractionMaxSpeed)
+def move_NAO(action):
+  pass
 
 # request the knee and hip angle from NAO and return it in the [hip_angle, knee_angle] format
 def get_NAO_info(NAO_connection):
-   useSensors    = True
-   knee_angle = motionProxy.getAngles(RKneePitch, useSensors)
-  return None
+  return "nao inf"
 
 
 # -------------------------------------------------------- Client - server stuff
@@ -91,12 +76,12 @@ def get_action(TCP_connection, TCP_socket):
 
 # send the NAO_info array in [hip_angle, knee_angle] format to the lab PC
 def send(NAO_info, s, TCP_connection):
-  data = pickle.dumps(NAO_info, protocol=0, fix_imports=True)
-  # data = pickle.dumps(609) used for testing
+  #data = pickle.dumps(NAO_info, protocol=0, fix_imports=True)
+  data = pickle.dumps(609) #used for testing
   TCP_connection.sendall(data)
   TCP_connection.recv(1024)
-  #B = pickle.loads(TCP_connection.recv(1024)) used for testing
-  #print (B) used for testing
+  B = pickle.loads(TCP_connection.recv(1024)) #used for testing
+  print (B) #used for testing
   
 
   
