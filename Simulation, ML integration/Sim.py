@@ -146,7 +146,7 @@ def setup_simulation():
     setup = {
         "step_length": step_length,
         "sim_steps_per_decision": 10,
-        "phi": -np.pi/6,
+        "phi": 0,
         # lengths /cm - innacurate
         "rl": 151 + 7,
         "sl1": 16,
