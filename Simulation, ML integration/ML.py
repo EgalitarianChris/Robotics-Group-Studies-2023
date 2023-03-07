@@ -7,7 +7,7 @@ import numpy as np
 import gym
 from gym import spaces
 from pymunk.pygame_util import DrawOptions
-# from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO
 
 # Create gym environment - Contains the machine learning code and the simulation code:
@@ -219,7 +219,7 @@ def main():
     # Initialise the simulation:
     environment = CustomEnv()
     environment.init_render()
-    # check_env(environment)
+    check_env(environment)
     # Run the simulation:
     while True:
         keys_pressed = get_events()
@@ -230,7 +230,7 @@ def main():
         environment.render()
 
 
-def ppo_main(filename, episodes = 3000):
+def ppo_main(filename="test_PPO_model_data", episodes = 3000):
     """
     Runs the simulation using stable-baselines3 proximal policy optimisation
     algorithm.
@@ -247,13 +247,13 @@ def ppo_main(filename, episodes = 3000):
     None.
     """
     env = CustomEnv()
-    model = PPO("MlpPolicy",env,verbose=1)
+    model = PPO("MlpPolicy",env,verbose=2)
     model.learn(total_timesteps= env.run_duration * episodes)
-    model.save("test_PPO_model_data")
+    model.save(filename)
     print("model saved\n---------------------------------------------------------")
     del model
 
-    model = PPO.load("test_PPO_model_data")
+    model = PPO.load(filename)
     print("model loaded\n---------------------------------------------------------")
     obs = env.reset()
     print("initialising renderer")
@@ -326,7 +326,7 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
         env.render()
 
 if __name__ == "__main__":
-    # main()
+    main()
     # ppo_main()
     # run_learned()
-    continue_learning()
+    # continue_learning("Model_learning_to_start", 1000)
