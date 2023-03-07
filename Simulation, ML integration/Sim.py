@@ -218,7 +218,7 @@ def setup_simulation():
                                pm_space),
         "top": Pivotjoint(background, bodies["rod"].body, setup["bg"],
                         (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), pm_space),
-        "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3, np.pi/3, pm_space)
+        "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3, np.pi/3, pm_space),
         "tip": Dampedrotaryspring(background, bodies["rod"].body, setup["phi"], 100, 10000, pm_space)
         # "shoulder": Pinjoint(bodies["torso"].body, bodies["upper_arm"].body,
         #                      (0, -setup["tl"] / 2 +0.25),
