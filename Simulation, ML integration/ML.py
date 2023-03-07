@@ -18,7 +18,6 @@ class CustomEnv(gym.Env):
         self.run_time = 0
         self.reward = 0
         self.realtime_ep_duration = 50
-        self.sim_steps_per_decision = 10
         self.observation = np.zeros(12)
         self.action_space = spaces.Box(np.array([-1, -1, -1, -1]),
                                        np.array([1, 1, 1, 1]),
@@ -28,6 +27,7 @@ class CustomEnv(gym.Env):
                                             dtype=np.float64)
         self.simulation_data = setup_simulation()
         self.step_length = self.simulation_data["setup"]["step_length"] * self.sim_steps_per_decision
+        self.sim_steps_per_decision = self.simulation_data["setup"]["sim_steps_per_decision"]
         self.run_duration = self.realtime_ep_duration / self.step_length
         self.window = None
         self.options = None
