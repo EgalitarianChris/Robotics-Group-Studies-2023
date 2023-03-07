@@ -59,7 +59,7 @@ class CustomEnv(gym.Env):
 
         observation = self.get_obs()
 
-        self.reward += self.get_reward(observation)
+        self.reward += self.get_reward(observation, action)
         info = self.get_info()
         done = self.quit_timer()
         self.observation = observation
@@ -138,7 +138,7 @@ class CustomEnv(gym.Env):
                                 combined_joint_angle_velocity])
         return observation
 
-    def get_reward(self, observation):
+    def get_reward(self, observation, action):
         """
         Takes in observations and uses them to calculate a reward function.
         k_1 through k_7 are parameters used to tweak the importance of different
@@ -147,17 +147,27 @@ class CustomEnv(gym.Env):
         ----------
         observation : array-like
             Angles and velocities in the swing which gets passed into PPO.
+        action : array-like - requested leg and torso angles and speeds normalised between -1 and 1
         Returns
         -------
         reward : float
             A score of how successfully the robot is swinging, PPO attempts to
             maximise this.
         """
-        k_1, k_2, k_3, k_4, k_5, k_6, k_7 = 1, 0, 0, 0, 0, 0, 0
+        k_1, k_2, k_3, k_4, k_5, k_6, k_7 = 10, 1, 10, 10, 0, 0, 0
+        action = np.array([action[0]*63 + 32,
+                       action[1]*190.3 + 190.3,
+                       action[2]*32.5 + 5.5,
+                       action[3]*190.3 + 190.3])
         top_angle, combined_joint_angle  = observation[2:4]
-        reward = top_angle * top_angle
-        penalty = combined_joint_angle * combined_joint_angle
-        return k_1*reward - k_2*penalty
+        reward = np.abs(top_angle)
+        penalty = np.abs(combined_joint_angle)
+        leg_velocity, torso_velocity = observation[4:6]
+        lv_action = np.sign(observation[0] - action[0])*action[1]
+        tv_action = np.sign(observation[1] - action[2])*action[3]
+        norm_delta_v_leg = np.abs(leg_velocity - lv_action)/720
+        norm_delta_v_torso = np.abs(torso_velocity - tv_action)/720
+        return k_1*reward - k_2*penalty - k_3*norm_delta_v_leg - k_4*norm_delta_v_torso
 
     def get_info(self):
         """
@@ -323,6 +333,6 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
 
 if __name__ == "__main__":
     # main()
-    ppo_main("", 1000)
+    ppo_main("new reward function", 1000)
     # run_learned()
     # continue_learning("Model_learning_to_start", 1000)
