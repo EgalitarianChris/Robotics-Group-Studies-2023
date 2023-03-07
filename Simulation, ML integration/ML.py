@@ -219,7 +219,7 @@ def main():
     # Initialise the simulation:
     environment = CustomEnv()
     environment.init_render()
-    check_env(environment)
+    # check_env(environment)
     # Run the simulation:
     while True:
         keys_pressed = get_events()
