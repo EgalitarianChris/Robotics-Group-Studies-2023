@@ -17,19 +17,18 @@ class CustomEnv(gym.Env):
     def __init__(self):
         self.run_time = 0
         self.reward = 0
-        # self.step_length = 1 / 100
+        self.realtime_ep_duration = 50
+        self.sim_steps_per_decision = 10
         self.observation = np.zeros(12)
-        #[-31, 0, -27, 0]    [95, 380.6, 38, 380.6]
         self.action_space = spaces.Box(np.array([-1, -1, -1, -1]),
                                        np.array([1, 1, 1, 1]),
                                        dtype=np.float32)
         self.observation_space = spaces.Box(np.array([-180, -180, -180, -180, -360, -360, -180, -180]),
                                             np.array([180, 180, 180, 180, 360, 360, 180, 180]),
                                             dtype=np.float32)
-
         self.simulation_data = setup_simulation()
-        self.step_length = self.simulation_data["setup"]["step_length"]
-        self.run_duration = 10 / self.step_length
+        self.step_length = self.simulation_data["setup"]["step_length"] * self.sim_steps_per_decision
+        self.run_duration = self.realtime_ep_duration / self.step_length
         self.window = None
         self.options = None
 
@@ -54,7 +53,8 @@ class CustomEnv(gym.Env):
         """
         self.simulation_data = perform_action(self, action, self.simulation_data)
         self.last_action = action
-        self.simulation_data["pm_space"].step(self.step_length)
+        for i in range(self.sim_steps_per_decision):
+            self.simulation_data["pm_space"].step(self.step_length/self.sim_steps_per_decision)
         # Potentially add random variation in step duration to help train for running on NAO
 
         observation = self.get_obs()
@@ -155,13 +155,9 @@ class CustomEnv(gym.Env):
         """
         k_1, k_2, k_3, k_4, k_5, k_6, k_7 = 1, 0, 0, 0, 0, 0, 0
         top_angle, combined_joint_angle  = observation[2:4]
-        # leg_acc, torso_acc = observation[7:9]
-        leg_acc , torso_acc = [0, 0]
         reward = top_angle * top_angle
         penalty = combined_joint_angle * combined_joint_angle
-        effort = get_effort(self, leg_acc, torso_acc,k_4,k_5,k_6,k_7)
-        # print(effort,reward,penalty)
-        return k_1*reward - k_2*penalty - k_3*effort
+        return k_1*reward - k_2*penalty
 
     def get_info(self):
         """
@@ -326,7 +322,7 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
         env.render()
 
 if __name__ == "__main__":
-    main()
-    # ppo_main()
+    # main()
+    ppo_main("", 1000)
     # run_learned()
     # continue_learning("Model_learning_to_start", 1000)
