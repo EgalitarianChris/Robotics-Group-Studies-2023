@@ -1,13 +1,13 @@
 # Import relevent libraries
 import time
 from Sim import setup_simulation, perform_action, get_action
-from effort_parameter import get_effort
+# from effort_parameter import get_effort
 import pygame
 import numpy as np
 import gym
 from gym import spaces
 from pymunk.pygame_util import DrawOptions
-from stable_baselines3.common.env_checker import check_env
+# from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO
 
 # Create gym environment - Contains the machine learning code and the simulation code:
@@ -154,19 +154,20 @@ class CustomEnv(gym.Env):
             A score of how successfully the robot is swinging, PPO attempts to
             maximise this.
         """
-        k_1, k_2, k_3, k_4, k_5, k_6, k_7 = 10, 1, 10, 10, 0, 0, 0
+        k_1, k_2, k_3, k_4 = 10, 0.1, 10, 10
         action = np.array([action[0]*63 + 32,
                        action[1]*190.3 + 190.3,
                        action[2]*32.5 + 5.5,
                        action[3]*190.3 + 190.3])
         top_angle, combined_joint_angle  = observation[2:4]
-        reward = np.abs(top_angle)
-        penalty = np.abs(combined_joint_angle)
+        reward = top_angle**2
+        penalty = combined_joint_angle**2
         leg_velocity, torso_velocity = observation[4:6]
         lv_action = np.sign(observation[0] - action[0])*action[1]
         tv_action = np.sign(observation[1] - action[2])*action[3]
         norm_delta_v_leg = np.abs(leg_velocity - lv_action)/720
         norm_delta_v_torso = np.abs(torso_velocity - tv_action)/720
+        # print(k_1*reward, k_2*penalty, k_3*norm_delta_v_leg, k_4*norm_delta_v_torso)
         return k_1*reward - k_2*penalty - k_3*norm_delta_v_leg - k_4*norm_delta_v_torso
 
     def get_info(self):
@@ -327,12 +328,14 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
     while True:
         action, _states = model.predict(obs)
         print("action:",action)
-        obs, rewards = env.step(action)[0:2]
-        print("observation:",obs,"rewards:",rewards)
+        obs = env.step(action)[0]
+        reward = env.get_reward(obs, action)
+        print("observation:",obs,"rewards:",reward)
+
         env.render()
 
 if __name__ == "__main__":
     # main()
-    ppo_main("new reward function", 1000)
+    # ppo_main("n_r_f_with_squares reward funct", 5000)
     # run_learned()
-    # continue_learning("Model_learning_to_start", 1000)
+    continue_learning("n_r_f_with_squares reward funct", 5000)
