@@ -1,5 +1,6 @@
 # Import relevent libraries
 import time
+import os
 from Sim import setup_simulation, perform_action, get_action
 # from effort_parameter import get_effort
 import pygame
@@ -9,6 +10,8 @@ from gym import spaces
 from pymunk.pygame_util import DrawOptions
 # from stable_baselines3.common.env_checker import check_env
 from stable_baselines3 import PPO
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import SubprocVecEnv
 
 # Create gym environment - Contains the machine learning code and the simulation code:
 class CustomEnv(gym.Env):
@@ -141,20 +144,21 @@ class CustomEnv(gym.Env):
     def get_reward(self, observation, action):
         """
         Takes in observations and uses them to calculate a reward function.
-        k_1 through k_7 are parameters used to tweak the importance of different
+        k_1 through k_4 are parameters used to tweak the importance of different
         behaviour in the neural network.
         Parameters
         ----------
         observation : array-like
             Angles and velocities in the swing which gets passed into PPO.
-        action : array-like - requested leg and torso angles and speeds normalised between -1 and 1
+        action : array-like
+            Requested leg and torso angles and speeds normalised between -1 and 1.
         Returns
         -------
         reward : float
             A score of how successfully the robot is swinging, PPO attempts to
             maximise this.
         """
-        k_1, k_2, k_3, k_4 = 10, 0.1, 10, 10
+        k_1, k_2, k_3, k_4 = 10, 1, 5, 5
         action = np.array([action[0]*63 + 32,
                        action[1]*190.3 + 190.3,
                        action[2]*32.5 + 5.5,
@@ -237,7 +241,7 @@ def main():
         environment.render()
 
 
-def ppo_main(filename="test_PPO_model_data", episodes = 3000):
+def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_count() - 2):
     """
     Runs the simulation using stable-baselines3 proximal policy optimisation
     algorithm.
@@ -254,7 +258,11 @@ def ppo_main(filename="test_PPO_model_data", episodes = 3000):
     None.
     """
     env = CustomEnv()
-    model = PPO("MlpPolicy",env,verbose=2)
+    if cores > 1:
+        vecenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
+        model = PPO("MlpPolicy", vecenv, verbose=2)
+    else:
+        model = PPO("MlpPolicy", env, verbose=2)
     model.learn(total_timesteps= env.run_duration * episodes)
     model.save(filename)
     print("model saved\n---------------------------------------------------------")
@@ -336,6 +344,6 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
 
 if __name__ == "__main__":
     # main()
-    # ppo_main("n_r_f_with_squares reward funct", 5000)
+    ppo_main()
     # run_learned()
-    continue_learning("n_r_f_with_squares reward funct", 5000)
+    # continue_learning()
