@@ -1,0 +1,88 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar  3 17:32:11 2023
+
+@author: bxd051
+"""
+
+import numpy as np
+from ML import CustomEnv
+import pymunk, sys
+import pygame
+import Sim
+
+def programatic(observation, old = np.array([0,-1,0,-1])):
+    '''
+    Parameters
+    ----------
+    observation : Array-like
+        8 variable array of leg angle, torso angle, top angle, combined angle and angular speeds
+        units of degrees and degrees/second
+    Returns
+    -------
+    action : Array-like
+        action space of intended leg angle and speed + intended torso angle and speed
+        all normalised between -1 and 1
+
+    '''
+    action = old#do nothing new generally
+    if 10 > np.abs(observation[6]) and observation[2] < 0:
+        action = np.array([-1,1,-1,65/126])
+        #if we're close to the end of the motion, and on the right, tuck as much as possible
+    elif 10 > np.abs(observation[6]) and observation[2] > 0:
+        action = np.array([1,1,1,65/126])
+        #if we're close to the end of the motion, and on the left, extend as much as possible
+    # print(round(observation[6], 2), action)
+    old_for_next = action
+    return action, old_for_next
+
+
+def angle_reached(theta, high_score):#seems to be useless, works out the max angle reached by the simulation
+    if abs(theta) > 5 and (abs(theta) - high_score[-1]) > 0.1:
+        high_score.append(abs(theta))
+    # highest_score = high_score[0]
+    return high_score
+
+def main():
+    """
+    Runs the simulation manually, no machine learning here.
+    Instantiates the custom Gym environment, listens for keypresses
+    then sets action based on input.
+
+    Returns
+    -------
+    None.
+
+    """
+    # Initialise the simulation:
+    environment = CustomEnv()
+    environment.init_render()
+    # check_env(environment)
+    # Run the simulation:
+    observation = environment.get_obs()
+    action, last_action = programatic(observation)
+    top_angle = environment.get_obs()[2]
+    # Step the simulation, then render the result (rendering in pymunk)
+    environment.step(action)
+    environment.render()
+    high_score = [0]
+    a=0
+    while True:
+        a+=1
+        high_score = angle_reached(top_angle, high_score)
+        observation = environment.get_obs()
+        action, last_action = programatic(observation, last_action)
+        top_angle = environment.get_obs()[2]
+
+        print(top_angle)
+        # Step the simulation, then render the result (rendering in pymunk)
+        environment.step(action)
+        environment.render()
+        # for event in pygame.event.get():  # checking for user input
+        if a==10000:#event.type == pygame.QUIT:
+            print(high_score)
+            print('high_score = ', max(high_score))
+            pygame.quit()
+            sys.exit()
+if __name__ == "__main__":
+    main()
