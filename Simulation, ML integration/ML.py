@@ -62,11 +62,11 @@ class CustomEnv(gym.Env):
 
         observation = self.get_obs()
 
-        self.reward += self.get_reward(observation, action)
+        reward = self.get_reward(observation, action)
         info = self.get_info()
         done = self.quit_timer()
         self.observation = observation
-        return observation, self.reward, done, info
+        return observation, reward, done, info
 
 
     def init_render(self):
