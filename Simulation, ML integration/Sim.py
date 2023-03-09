@@ -176,11 +176,9 @@ def setup_simulation():
     }
     centres = {
         "rc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] / 2, setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] / 2),
-        "sc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"], setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + setup["sl2"] / 2),
-        "lc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] + setup["sl4"][1], setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + setup["sl2"] - setup["sl4"][0] / 2 + setup["ll1"] / 2),
-        "tc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] - setup["sl3"] / 2, setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + setup["sl2"] - setup["tl"] / 2 -0.25),
-        
-        "hip": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] , setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + setup["sl2"] - setup["sl4"][0] /2),
+        "sc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] + np.sin(setup["phi"])*setup["sl2"] /2, setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + np.cos(setup["phi"])*setup["sl2"] / 2),
+        "lc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] + np.sin(setup["phi"])*(setup["sl2"] - setup["sl4"][0]) + np.cos(setup["phi"])*setup["sl4"][1] + np.sin(setup["phi"])*setup["ll1"], setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + np.cos(setup["phi"])*(setup["sl2"] - setup["sl4"][0]) - np.sin(setup["phi"])*setup["sl4"][1] + np.cos(setup["phi"])*setup["ll1"]),
+        "hip": (setup["bg"][0] + np.sin(setup["phi"])*(setup["rl"] + setup["sl2"] - setup["sl4"][0] /2), setup["bg"][1] + np.cos(setup["phi"])*(setup["rl"] + setup["sl2"] - setup["sl4"][0] /2)),
         # "a1c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
         # "a2c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) + setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2)
     }
@@ -189,17 +187,18 @@ def setup_simulation():
     bodies = {
         "rod": Rod(centres["rc"], (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2), setup["rm"], pm_space),
         "swing": Swing(centres["sc"],
-                           (0, -setup["sl2"] / 2), (setup["sl1"], -setup["sl2"] / 2),#a1,b1
-                           (0, setup["sl2"] / 2), (0, -setup["sl2"] / 2),#a2,b2
-                           (-setup["sl3"] / 2 - 0.5, setup["sl2"] / 2), (setup["sl3"] / 2 - 0.5, setup["sl2"] / 2),#a3,b3
-                           (0 , setup["sl2"] / 2 - setup["sl4"][0] /2), (setup["sl4"][1], setup["sl2"] / 2 - setup["sl4"][0] /2),#a4,b4
-                           setup["sm1"], setup["sm2"], setup["sm3"],
-                           setup["sm4"], pm_space),
-        "leg": Leg(centres["lc"], (0, - setup["ll1"] / 2), (0, setup["ll1"] / 2), (-5, setup["ll1"] / 2),
-                       (10, setup["ll1"] / 2), setup["lm1"], setup["lm2"], pm_space),
-        "torso": Torso((centres["hip"][0], centres["hip"][1]- setup["tl"] / 2 -0.25),
-                       (0, -setup["tl"] / 2 +0.25), (0, setup["tl"] / 2 -0.25),#a1,b1
-                       6, (0, -2 -setup["tl"] / 2 +0.25), setup["tm"], setup["head"], pm_space),
+                           (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2), (np.cos(setup["phi"])*setup["sl1"] - np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2 - np.sin(setup["phi"])*setup["sl1"]),#a1,b1
+                           (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2), (np.sin(setup["phi"])*setup["sl2"] /2, np.cos(setup["phi"])*setup["sl2"] / 2),#a2,b2 
+                           (-np.cos(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.sin(setup["phi"])*setup["sl2"] /2, np.sin(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.cos(setup["phi"])*setup["sl2"] / 2), (np.cos(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.sin(setup["phi"])*setup["sl2"] /2, -np.sin(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.cos(setup["phi"])*setup["sl2"] / 2),#a3,b3
+                           (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) , np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2)), (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) + np.cos(setup["phi"])*setup["sl4"][1], np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) - np.sin(setup["phi"])*setup["sl4"][1]),#a4,b4
+                           setup["sm1"], setup["sm2"], setup["sm3"], setup["sm4"], pm_space),
+        "leg": Leg(centres["lc"],
+                           (-np.sin(setup["phi"])*setup["ll2"] /2, -np.cos(setup["phi"])*setup["ll2"] /2), (np.sin(setup["phi"])*setup["ll2"] /2, np.cos(setup["phi"])*setup["ll2"] /2),
+                           (np.sin(setup["phi"])*setup["ll2"] /2 - np.cos(setup["phi"])*5, np.cos(setup["phi"])*setup["ll2"] /2 + np.sin(setup["phi"])*5), (np.sin(setup["phi"])*setup["ll2"] /2 + np.cos(setup["phi"])*10, np.cos(setup["phi"])*setup["ll2"] /2 - np.sin(setup["phi"])*10),
+                           setup["lm1"], setup["lm2"], pm_space),
+        "torso": Torso((centres["hip"][0] - np.sin(setup["phi"])*(setup["tl"] / 2 -0.25), centres["hip"][1] - np.cos(setup["phi"])*(setup["tl"] / 2 -0.25)),
+                       (- np.sin(setup["phi"])*(setup["tl"] / 2 +0.25), - np.cos(setup["phi"])*(setup["tl"] / 2 +0.25)), (np.sin(setup["phi"])*(setup["tl"] / 2 +0.25), np.cos(setup["phi"])*(setup["tl"] / 2 +0.25)),#a1,b1
+                       6, (- np.sin(setup["phi"])*(2 + setup["tl"] / 2 +0.25), - np.cos(setup["phi"])*(setup["tl"] / 2 +0.25)), setup["tm"], setup["head"], pm_space),
     
         # "upper_arm": Arm(centres["a1c"], (-setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, -setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
         #                   (setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
@@ -211,14 +210,21 @@ def setup_simulation():
 
     # fixed joints of simulation
     joints = {
-        "back": Pivotjoint(bodies["swing"].body, bodies["torso"].body, (0 , setup["sl2"] / 2 - setup["sl4"][0] /2),
-                             (0, setup["tl"] / 2), pm_space),
-        "front": Pivotjoint(bodies["swing"].body, bodies["leg"].body, (setup["sl4"][1], (setup["sl2"] - setup["sl4"][0]) / 2 ),
-                              (0, -setup["ll1"] / 2), pm_space),
-        "bottom": Pivotjoint(bodies["rod"].body, bodies["swing"].body, (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2), (0, -setup["sl2"] / 2),
-                               pm_space),
+        "back": Pivotjoint(bodies["swing"].body, bodies["torso"].body,
+                          (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) , np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2)),
+                          (np.sin(setup["phi"])*(setup["tl"] / 2 +0.25), np.cos(setup["phi"])*(setup["tl"] / 2 +0.25)),
+                          pm_space),
+        "front": Pivotjoint(bodies["swing"].body, bodies["leg"].body,
+                            (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) + np.cos(setup["phi"])*setup["sl4"][1], np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) - np.sin(setup["phi"])*setup["sl4"][1]),
+                            (-np.sin(setup["phi"])*setup["ll2"] /2, -np.cos(setup["phi"])*setup["ll2"] /2),
+                            pm_space),
+        "bottom": Pivotjoint(bodies["rod"].body, bodies["swing"].body,
+                            (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2),
+                            (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2),
+                            pm_space),
         "top": Pivotjoint(background, bodies["rod"].body, setup["bg"],
-                        (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), pm_space),
+                              (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2),
+                              pm_space),
         "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3 -setup["phi"], np.pi/3 -setup["phi"], pm_space),
         "tip": Dampedrotaryspring(background, bodies["rod"].body, 0, 0, 2285, pm_space)
         # "shoulder": Pinjoint(bodies["torso"].body, bodies["upper_arm"].body,
