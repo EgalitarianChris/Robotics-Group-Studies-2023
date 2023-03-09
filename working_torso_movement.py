@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Created on Thu Mar  2 16:59:47 2023
 @author: bgh009
@@ -8,6 +6,7 @@ Created on Thu Mar  2 16:59:47 2023
 
 from naoqi import ALProxy
 import time
+
 
 Leg_min = 163   #min and max leg angle (not sure how accurate these are)
 Leg_max = 231
@@ -80,7 +79,7 @@ class NAOController:
         
     def move_shoulder_roll(self, angle, speed):
         self.move_joint("LShoulderRoll", angle, speed)
-        self.move_joint("RShoulderRoll", -angle, speed)   #need -ve sign on some joints
+        self.move_joint("RShoulderRoll", -angle, speed)
         
     def move_elbow_roll(self, angle, speed):
         self.move_joint("LElbowRoll", angle, speed)
@@ -94,13 +93,42 @@ class NAOController:
         self.move_joint("LHipPitch", angle, speed)
         self.move_joint("RHipPitch", angle, speed)
 
+    
+    def move_elbow_yaw(self, angle, speed):
+        self.move_joint("LElbowYaw", angle, speed)
+        self.move_joint("RElbowYaw", -angle, speed)
+    
+    def move_head_yaw(self, angle, speed):
+        self.move_joint("HeadYaw", angle, speed)
+        
+    def move_head_pitch(self, angle, speed):
+        self.move_joint("HeadPitch", angle, speed)
+        
+    def move_hip_yaw_pitch(self, angle, speed):
+        self.move_joint("LHipYawPitch", angle, speed)
+        self.move_joint("RHipYawPitch", angle, speed)
+    
+    def move_ankle_roll(self, angle, speed):
+        self.move_joint("LAnkleRoll", angle, speed)
+        self.move_joint("RAnkleRoll", angle, speed)
+
+    def move_hip_roll(self, angle, speed):
+        self.move_joint("LHipRoll", angle, speed)
+        self.move_joint("RHipRoll", angle, speed)   
+    
+
+
+# elbow yaw, head yaw, head pitch, hip yaw pitch, ankle roll, hip roll
+
+
 #define set of angles corresponding to extended/contracted position
 angles1 = calculate_angles(Torso_min, Leg_min)
 angles2 = calculate_angles(Torso_max, Leg_max)
 angles3 = calculate_angles(10, 180)  #possible neutral position angle set
 
 # Define speed of joint movement
-speed = 0.035   #max value is 1/28.1, can take values between -1 and 1
+fraction_speed = 1
+speed =  fraction_speed / 28.1  #max value is 1/28.1, can take values between -1 and 1
 
 # Instantiate NAOController class with wireless robot IP address
 nao = NAOController("169.254.61.216")
@@ -113,6 +141,25 @@ raw2 = raw & 2047
 angle = float(raw2)*(360.0/2048.0)
 del(my_pmd)
 '''
+def set_neutral_position():   #sets initial neutral position (returning error currently)
+    nao.move_knee_pitch(angles3[0], speed)
+    nao.move_ankle_pitch(angles3[1], speed)
+    nao.move_shoulder_pitch(angles3[2], speed)
+    nao.move_shoulder_roll(angles3[3], speed)
+    nao.move_elbow_roll(angles3[5], speed)
+    nao.move_wrist_yaw(angles3[7], speed)
+    nao.move_hip_pitch(angles3[9], speed)
+    
+    nao.move_elbow_yaw(-0.9971, speed)
+    nao.move_head_yaw(0.0168, speed)
+    nao.move_head_pitch(0.5148, speed)
+    nao.move_hip_yaw_pitch(-0.0367, speed)
+    nao.move_ankle_roll(-0.0199, speed)
+    nao.move_hip_roll(-0.0014, speed)
+
+set_neutral_position()
+time.sleep(2)
+
 counter = 0
 while counter < 20:
     angle = (-1) ** counter
@@ -141,11 +188,5 @@ while counter < 20:
         nao.move_wrist_yaw(angles2[7], speed)
         nao.move_hip_pitch(angles2[9], 11.6*speed)
   
-def set_neutral_position():   #sets initial neutral position (returning error currently)
-    nao.move_knee_pitch(angles3[0])
-    nao.move_ankle_pitch(angles3[1])
-    nao.move_shoulder_pitch(angles3[2])
-    nao.move_shoulder_roll(angles3[3])
-    nao.move_elbow_roll(angles3[5])
-    nao.move_wrist_yaw(angles3[7])
-    nao.move_hip_pitch(angles3[9])
+time.sleep(5)
+nao.motion_proxy.setStiffnesses(["Body"], 0)
