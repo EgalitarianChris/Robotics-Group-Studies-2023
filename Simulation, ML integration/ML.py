@@ -241,7 +241,7 @@ def main():
         environment.render()
 
 
-def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_count() - 2):
+def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_count() - 1):
     """
     Runs the simulation using stable-baselines3 proximal policy optimisation
     algorithm.
@@ -268,18 +268,7 @@ def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_cou
     print("model saved\n---------------------------------------------------------")
     del model
 
-    model = PPO.load(filename)
-    print("model loaded\n---------------------------------------------------------")
-    obs = env.reset()
-    print("initialising renderer")
-    env.init_render()
-    print("starting while loop (running the trained model)")
-    while True:
-        action, _states = model.predict(obs)
-        print("action:",action)
-        obs, rewards = env.step(action)[0:2]
-        print("observation:",obs,"rewards:",rewards)
-        env.render()
+    run_learned(filename)
 
 def run_learned(filename = "test_PPO_model_data"):
     '''
@@ -295,9 +284,12 @@ def run_learned(filename = "test_PPO_model_data"):
 
     '''
     model = PPO.load(filename)
+    print("model loaded\n---------------------------------------------------------")
     env = CustomEnv()
     obs = env.reset()
+    print("initialising renderer")
     env.init_render()
+    print("starting while loop (running the trained model)")
     while True:
         action, _states = model.predict(obs)
         print("action:",action)
@@ -305,7 +297,7 @@ def run_learned(filename = "test_PPO_model_data"):
         print("observation:",obs,"rewards:",rewards)
         env.render()
 
-def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
+def continue_learning(filename = "test_PPO_model_data", episodes = 3000, cores = os.cpu_count() - 1):
     '''
     Allows you to continue learning with a model that some training has already been done with
 
@@ -321,29 +313,42 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000):
 
     '''
     env = CustomEnv()
-    model = PPO.load(filename, env)
+    if cores > 1:
+        vecenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
+        model = PPO.load(filename, vecenv)
+    else:
+        model = PPO.load(filename, env)
     model.learn(total_timesteps= env.run_duration * episodes)
     model.save(filename)
     print("model saved\n---------------------------------------------------------")
     del model
 
-    model = PPO.load(filename)
-    print("model loaded\n---------------------------------------------------------")
-    obs = env.reset()
-    print("initialising renderer")
-    env.init_render()
-    print("starting while loop (running the trained model)")
-    while True:
-        action, _states = model.predict(obs)
-        print("action:",action)
-        obs = env.step(action)[0]
-        reward = env.get_reward(obs, action)
-        print("observation:",obs,"rewards:",reward)
+def long_term_learning(run_length = 3600, filename = "test_PPO_model_data", episodes = 3000):
+    """
+    Calls the continue_learning() function until a set amount of time has passed.
+    Parameters
+    ----------
+    time : int
+        Time in seconds to run ML for.
+    filename : string
+        Name of file
+    episodes : int
+        Number of episodes
+    Returns
+    -------
+    None.
+    """
+    start = time.time()
+    dif = 0
+    while dif < run_length:
+        dif = time.time() - start
+        continue_learning(filename, episodes)
 
-        env.render()
 
 if __name__ == "__main__":
     # main()
-    ppo_main()
+    #ppo_main()
     # run_learned()
     # continue_learning()
+
+    long_term_learning(run_length=14400)
