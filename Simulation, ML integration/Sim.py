@@ -248,7 +248,7 @@ def perform_action(environment, action, simulation_data):
     torso_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
 
     #arbitrary acceleration (units of change in speed per tick)
-    acceleration = 0.5
+    acceleration = 1
     
     #target speeds but with directions defined aswell
     signs = np.sign(np.array([action[0], action[2]]) - np.array([leg_angle, torso_angle])) * (np.pi / 180) * [action[1], action[3]]
