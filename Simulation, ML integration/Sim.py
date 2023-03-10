@@ -46,9 +46,9 @@ class Leg:
         space.add(self.body, leg, foot)
 
 class Swing:
-    'class that constructs the swing and naos attatched leg segment'
+    'class that constructs the swing and Naos attatched leg segment'
     def __init__(self,pos, a1, b1, a2, b2, a3, b3, a4, b4, m1, m2, m3, m4, space):
-        'position of CoM, a=start, b=end, m=mass, 1/2/3=bar/vertical/base'
+        'position of CoM, a=start, b=end, m=mass, 1/2/3/4=bar/vertical/base/leg segment'
         
         self.body = pymunk.Body()
         self.body.position = pos
@@ -77,7 +77,7 @@ class Swing:
         space.add(self.body, bar, vertical, base, leg)
 
 class Torso:
-    'consturcting Naos torso and head'
+    'constructing Naos torso and head'
     def __init__(self, pos, a1, b1, r2, a2, m1, m2, space):
         'position of CoM, a1= torso start, b1=torso end, r2=head radius, a2=head offset, m=mass'
         
