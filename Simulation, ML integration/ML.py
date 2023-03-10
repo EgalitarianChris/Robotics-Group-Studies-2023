@@ -1,6 +1,7 @@
 # Import relevent libraries
 import time
 import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from Sim import setup_simulation, perform_action, get_action
 # from effort_parameter import get_effort
 import pygame
@@ -22,11 +23,11 @@ class CustomEnv(gym.Env):
         self.reward = 0
         self.realtime_ep_duration = 50
         self.observation = np.zeros(12)
-        self.action_space = spaces.Box(np.array([-1, -1, -1, -1]),
-                                       np.array([1, 1, 1, 1]),
-                                       dtype=np.float32)
-        self.observation_space = spaces.Box(np.array([-180, -180, -180, -180, -360, -360, -180, -180]),
-                                            np.array([180, 180, 180, 180, 360, 360, 180, 180]),
+        self.action_space = spaces.Box(np.array([-1., -1., -1., -1.]),
+                                       np.array([1., 1., 1., 1.]),
+                                       dtype=np.float64)
+        self.observation_space = spaces.Box(np.array([-180., -180., -180., -180., -360., -360., -180., -180.]),
+                                            np.array([180., 180., 180., 180., 360., 360., 180., 180.]),
                                             dtype=np.float64)
         self.simulation_data = setup_simulation()
         self.sim_steps_per_decision = self.simulation_data["setup"]["sim_steps_per_decision"]
@@ -260,9 +261,9 @@ def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_cou
     env = CustomEnv()
     if cores > 1:
         vecenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
-        model = PPO("MlpPolicy", vecenv, verbose=2)
+        model = PPO("MlpPolicy", vecenv, verbose=2, tensorboard_log="./tensorboard/"))
     else:
-        model = PPO("MlpPolicy", env, verbose=2)
+        model = PPO("MlpPolicy", env, verbose=2, tensorboard_log="./tensorboard/"))
     model.learn(total_timesteps= env.run_duration * episodes)
     model.save(filename)
     print("model saved\n---------------------------------------------------------")
@@ -315,10 +316,10 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000, cores =
     env = CustomEnv()
     if cores > 1:
         vecenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
-        model = PPO.load(filename, vecenv)
+        model = PPO.load(filename, vecenv, tensorboard_log="./tensorboard/")
     else:
         model = PPO.load(filename, env)
-    model.learn(total_timesteps= env.run_duration * episodes)
+    model.learn(total_timesteps= env.run_duration * episodes, tb_log_name="PPO", reset_num_timesteps=False)
     model.save(filename)
     print("model saved\n---------------------------------------------------------")
     del model
