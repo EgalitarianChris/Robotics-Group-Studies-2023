@@ -11,7 +11,6 @@ class Rod:
         
         self.body = pymunk.Body()
         self.body.position = pos
-        self.body.center_of_gravity = (0,0)
         
         #properties of the rod
         rod = pymunk.Segment(self.body, a, b, radius)
@@ -29,7 +28,6 @@ class Leg:
         
         self.body = pymunk.Body()
         self.body.position = pos
-        self.body.center_of_gravity = (0,0) #needs calculation
         
         #properties of the leg
         leg = pymunk.Segment(self.body, a1, b1, radius=2)
@@ -83,7 +81,6 @@ class Torso:
         
         self.body = pymunk.Body()
         self.body.position = pos
-        self.body.center_of_gravity = (0,0)
         
         #properties of the torso
         self.torso = pymunk.Segment(self.body, a1, b1 , radius=2)
