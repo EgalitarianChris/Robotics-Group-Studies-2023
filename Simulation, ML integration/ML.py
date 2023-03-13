@@ -172,8 +172,13 @@ class CustomEnv(gym.Env):
         tv_action = np.sign(observation[1] - action[2])*action[3]
         norm_delta_v_leg = np.abs(leg_velocity - lv_action)/720
         norm_delta_v_torso = np.abs(torso_velocity - tv_action)/720
+        top_angle_velocity = (self.simulation_data["pm_space"].bodies[0].angular_velocity)
+        KE = top_angle_velocity * top_angle_velocity / 2
+        PE = (1 - np.cos(top_angle/180*np.pi))
+        k = 1/9
+        E_tot = k*KE + PE
         # print(k_1*reward, k_2*penalty, k_3*norm_delta_v_leg, k_4*norm_delta_v_torso)
-        return k_1*reward - k_2*penalty - k_3*norm_delta_v_leg - k_4*norm_delta_v_torso
+        return E_tot
 
     def get_info(self):
         """
