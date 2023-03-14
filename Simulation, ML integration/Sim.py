@@ -194,47 +194,72 @@ def setup_simulation():
     }
 
     bodies = {
-        # Bodies added to the simulation (centre then start and end of each segment as defined in the classes)
-        "rod": Rod(centres["rc"], (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2), (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2), setup["rm"], pm_space),
+        # Bodies added to the simulation
+        #(centre of body, cordinates from centre to an end of each segment)
+        "rod": Rod(centres["rc"],
+                   #((end 1 x pos, end 1 y pos), (end 2 x pos, end 2 y pos))
+                   (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2),
+                   (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2),
+                   #mass of rod, space to be added to
+                   setup["rm"], pm_space),
+        
         "swing": Swing(centres["sc"],
-                           (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2), (np.cos(setup["phi"])*setup["sl1"] - np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2 - np.sin(setup["phi"])*setup["sl1"]),#a1,b1
-                           (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2), (np.sin(setup["phi"])*setup["sl2"] /2, np.cos(setup["phi"])*setup["sl2"] / 2),#a2,b2 
-                           (-np.cos(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.sin(setup["phi"])*setup["sl2"] /2, np.sin(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.cos(setup["phi"])*setup["sl2"] / 2), (np.cos(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.sin(setup["phi"])*setup["sl2"] /2, -np.sin(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.cos(setup["phi"])*setup["sl2"] / 2),#a3,b3
-                           (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) , np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2)), (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) + np.cos(setup["phi"])*setup["sl4"][1], np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) - np.sin(setup["phi"])*setup["sl4"][1]),#a4,b4
-                           setup["sm1"], setup["sm2"], setup["sm3"], setup["sm4"], pm_space),
+                       #horizontal bar start and end points
+                       (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2),
+                       (np.cos(setup["phi"])*setup["sl1"] - np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2 - np.sin(setup["phi"])*setup["sl1"]),
+                       #vertical rod start and end points 
+                       (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2),
+                       (np.sin(setup["phi"])*setup["sl2"] /2, np.cos(setup["phi"])*setup["sl2"] / 2),
+                       #swing base start and end points    
+                       (-np.cos(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.sin(setup["phi"])*setup["sl2"] /2, np.sin(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.cos(setup["phi"])*setup["sl2"] / 2),
+                       (np.cos(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.sin(setup["phi"])*setup["sl2"] /2, -np.sin(setup["phi"])*(setup["sl3"] / 2 - 0.5) + np.cos(setup["phi"])*setup["sl2"] / 2),#a3,b3
+                       #Nao upper leg (attatched to swing) start and end points    
+                       (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) , np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2)),
+                       (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) + np.cos(setup["phi"])*setup["sl4"][1], np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) - np.sin(setup["phi"])*setup["sl4"][1]),#a4,b4
+                       #masses (in order), space to be added to    
+                       setup["sm1"], setup["sm2"], setup["sm3"], setup["sm4"], pm_space),
+        
         "leg": Leg(centres["lc"],
-                           (-np.sin(setup["phi"])*setup["ll2"] /2, -np.cos(setup["phi"])*setup["ll2"] /2), (np.sin(setup["phi"])*setup["ll2"] /2, np.cos(setup["phi"])*setup["ll2"] /2),
-                           (np.sin(setup["phi"])*setup["ll2"] /2 - np.cos(setup["phi"])*5, np.cos(setup["phi"])*setup["ll2"] /2 + np.sin(setup["phi"])*5), (np.sin(setup["phi"])*setup["ll2"] /2 + np.cos(setup["phi"])*10, np.cos(setup["phi"])*setup["ll2"] /2 - np.sin(setup["phi"])*10),
-                           setup["lm1"], setup["lm2"], pm_space),
+                   #Nao lower leg start and end points        
+                   (-np.sin(setup["phi"])*setup["ll2"] /2, -np.cos(setup["phi"])*setup["ll2"] /2),
+                   (np.sin(setup["phi"])*setup["ll2"] /2, np.cos(setup["phi"])*setup["ll2"] /2),
+                   #Nao foot start and end points        
+                   (np.sin(setup["phi"])*setup["ll2"] /2 - np.cos(setup["phi"])*5, np.cos(setup["phi"])*setup["ll2"] /2 + np.sin(setup["phi"])*5),
+                   (np.sin(setup["phi"])*setup["ll2"] /2 + np.cos(setup["phi"])*10, np.cos(setup["phi"])*setup["ll2"] /2 - np.sin(setup["phi"])*10),
+                   #lower leg mass, foot mass, space        
+                   setup["lm1"], setup["lm2"], pm_space),
+        
         "torso": Torso((centres["hip"][0] - np.sin(setup["phi"]+np.pi/4) * (setup["tl"] / 2 - 0.25),
                         centres["hip"][1] - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 - 0.25)),
-                       (- np.sin(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25),
-                        - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)), 
-                       (np.sin(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25),
-                       np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)),  # a1,b1
-                       6, (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25),
-                           - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)), #head
-                       (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25 - 3.5),
-                        - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25 - 3.5)),
-                       (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25 - 3.5 + setup["al"]),
-                        - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25 - 3.5 + setup["al"])),
+                       #torso start and end points
+                       (- np.sin(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25), - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)), 
+                       (np.sin(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25), np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)),
+                       #head radius and centre
+                       6, (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25), - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)),
+                       #arm start and end points
+                       (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25 - 3.5), - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25 - 3.5)),
+                       (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25 - 3.5 + setup["al"]), - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25 - 3.5 + setup["al"])),
+                       #masses, space
                        setup["tm"], setup["head"], setup["arms"], pm_space),
     }
 
     joints = {
-        # Joints between the bodies (body 1, body 2, coordinates of joint realtive to centre of body 1, coordinates relative to body 2 centre)
+        # Joints between the bodies (body 1, body 2, coordinates of joint realtive to centre of body 1, coordinates relative to body 2 centre) 
         "torso": Pivotjoint(bodies["swing"].body, bodies["torso"].body,
                           (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) , np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2)),
                           (np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25), np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)),
                           pm_space),
+        
         "leg": Pivotjoint(bodies["swing"].body, bodies["leg"].body,
                             (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) + np.cos(setup["phi"])*setup["sl4"][1], np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) - np.sin(setup["phi"])*setup["sl4"][1]),
                             (-np.sin(setup["phi"])*setup["ll2"] /2, -np.cos(setup["phi"])*setup["ll2"] /2),
                             pm_space),
+        
         "swing": Pivotjoint(bodies["rod"].body, bodies["swing"].body,
                             (np.sin(setup["phi"])*setup["rl"] / 2, np.cos(setup["phi"])*setup["rl"] / 2),
                             (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2),
                             pm_space),
+        
         "top": Pivotjoint(background, bodies["rod"].body, setup["bg"],
                               (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2),
                               pm_space),
@@ -252,6 +277,7 @@ def setup_simulation():
         "torso": Simplemotor(bodies["swing"].body, bodies["leg"].body, 0, pm_space),
         "leg": Simplemotor(bodies["swing"].body, bodies["torso"].body, 0, pm_space),
     }
+    
     return {"pm_space": pm_space, "motors": motors, "bodies": bodies, "joints": joints, "speeds": speeds, "setup": setup}
 
 
