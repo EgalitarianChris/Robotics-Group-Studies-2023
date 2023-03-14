@@ -243,9 +243,9 @@ def setup_simulation():
 def perform_action(environment, action, simulation_data):
     #redefining actions to be in degrees and degrees per second from the -1, 1 range used by machine learning
     #action = (leg angle, leg speed, torso angle, torso speed)
-    action = np.array([action[0]*(-5.271 - 67.895)/2 + (-5.271 + 67.895)/2,
+    action = np.array([action[0]*((90--5.271) - (90-67.895))/2 + ((90--5.271) + (90-67.895))/2,
                        action[1]*190.3 + 190.3,
-                       action[2]*(29.186 - 70.054)/2 + (29.186 + 70.054)/2,
+                       action[2]*((90-29.186) - (90-70.054))/2 + ((90-29.186) + (90-70.054))/2,
                        action[3]*190.3 + 190.3])
     
     #get angle of leg and torso relative to the swing in degrees (defined as 0 perpendicular to the swing)
