@@ -75,11 +75,11 @@ def get_NAO_info(NAO_connection, NAO_IP = "192.168.1.3"):
     Hip_angle = NAO_connection.getAngles('RHipPitch', useSensors)
     return [Knee_angle[0]*180/3.14159,Hip_angle[0]*180/3.14159]
 
-def action_convert(action, l0 = -0.092, l1 = 1.185, h0 = -1.033, h1 = -0.35, v = 6.637):    #variables are min max leg and hip angle, max joint speed
+def action_convert(action, l0 = -0.092, l1 = 1.185, h0 = -1.033, h1 = -0.35):    #variables are min max leg and hip angle
     action = [action[0]*(l1 - l0)/2 + l0 + (l1 - l0)/2,
-              (action[1]*v/2 + v/2)/v,
+              action[1]*1/2 + 1/2,
               action[2]*(h1 - h0)/2 + h0 + (h1 - h0)/2,
-              (action[3]*v/2 + v/2)/v]
+              action[3]*1/2 + 1/2]
     #maximum upright hip angle [-1.0338740348815918]
     #minimum knee pitch [1.1857401132583618]
     #maximum lean back for hip angle [-0.35]
