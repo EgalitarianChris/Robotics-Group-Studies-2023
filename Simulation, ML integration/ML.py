@@ -350,11 +350,28 @@ def long_term_learning(run_length = 3600, filename = "test_PPO_model_data", epis
         dif = time.time() - start
         continue_learning(filename, episodes)
 
+def tensor_checks(params, run_length = 3600, episodes=10000):
+    start = time.time()
+    env = CustomEnv()
+    for num, i  in enumerate(params):
+        vecenv = make_vec_env(CustomEnv, n_envs=(os.cpu_count() - 1), vec_env_cls=SubprocVecEnv)
+        model = PPO("MlpPolicy", vecenv, verbose=1, tensorboard_log="./tensorboard/",learning_rate=i[0], ent_coef=i[1], clip_range=i[2])
+        model.learn(total_timesteps= env.run_duration * episodes)
+        del model
+        print(f"Finished run {num}.")
+        if (time.time() - start) > run_length:
+            print(f"Time exceeded maximum run length of {run_length} seconds.")
+            break
+
+
 
 if __name__ == "__main__":
     # main()
     #ppo_main()
     # run_learned()
     # continue_learning()
+    hyperparameters = [[0.0001, 0.0001, 0.1], [0.0001, 0.0002, 0.1], [0.0001, 0.0003, 0.1], [0.0001, 0.0002, 0.2],
+                       [0.0001, 0.0003, 0.2], [0.0002, 0.0002, 0.2], [0.0003, 0.0002, 0.2], [0.0003, 0.0003, 0.1]]
 
-    long_term_learning(run_length=14400)
+    tensor_checks(hyperparameters, run_length=10800)
+    #long_term_learning(run_length=14400)
