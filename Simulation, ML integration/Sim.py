@@ -79,26 +79,31 @@ class Swing:
 
 class Torso:
     'constructing Naos torso and head'
-    def __init__(self, pos, a1, b1, r2, a2, m1, m2, space):
+     def __init__(self, pos, a1, b1, r2, a2, a3, b3, m1, m2, m3, space):
         'position of CoM, a1= torso start, b1=torso end, r2=head radius, a2=head offset, m=mass'
-        
+
         self.body = pymunk.Body()
         self.body.position = pos
-        
-        #properties of the torso
-        self.torso = pymunk.Segment(self.body, a1, b1 , radius=2)
-        self.torso.filter = pymunk.ShapeFilter(group = 1)
+
+        # properties of the torso
+        self.torso = pymunk.Segment(self.body, a1, b1, radius=2)
+        self.torso.filter = pymunk.ShapeFilter(group=1)
         self.torso.mass = m1
         self.torso.color = (255, 0, 0, 0)
-        
-        #properties of the head
+
+        # properties of the head
         self.head = pymunk.Circle(self.body, r2, a2)
         self.head.mass = m2
-        self.head.filter = pymunk.ShapeFilter(group = 1)
-        self.head.color = (255, 0, 0, 0)
-        
-        space.add(self.body, self.torso, self.head)
+        self.head.filter = pymunk.ShapeFilter(group=1)
+        self.head.color = (200, 200, 0, 0)
 
+        # properties of the arms
+        self.arms = pymunk.Segment(self.body, a3, b3, radius=1.8)
+        self.arms.mass = m3
+        self.arms.filter = pymunk.ShapeFilter(group=1)
+        self.arms.color = (200, 0, 0, 0)
+
+        space.add(self.body, self.torso, self.head, self.arms)
 
 class Simplemotor:
     'class to add a motor of constant speed to a joint (automatically replaces old motors)'
@@ -154,7 +159,7 @@ def setup_simulation():
         "bg": (400, 200), #position of the top joint
         "step_length": step_length, #time step of the simulation
         "sim_steps_per_decision": 10, #number of simulation steps per action taken by machine learning
-        "phi": -np.pi/12, #initial angle of the top joint
+        "phi": -np.pi / 12, #initial angle of the top joint
         
         # lengths /cm
         "rl": 151 + 7, #rod length
@@ -165,6 +170,7 @@ def setup_simulation():
         "ll1": 14, #lower leg length
         "ll2": 15, #foot lenth
         "tl": 18.5, #torso length
+        "al": 26.0, #arm length
 
         # masses /kg (numbered same as lengths)
         "rm": 1.235 + 0.381 / 2,
@@ -176,6 +182,7 @@ def setup_simulation():
         "lm2": 0.162 * 2 + 0.134,
         "tm": 1.050 + 0.064 + 0.075 + 0.070,
         "head": 0.605,
+        "arms": 0.07504 + 0.15794 + 0.15777 + 0.06483*2 + 0.0777*2 + 0.18533*2
     }
     
     centres = {
@@ -201,9 +208,19 @@ def setup_simulation():
                            (-np.sin(setup["phi"])*setup["ll2"] /2, -np.cos(setup["phi"])*setup["ll2"] /2), (np.sin(setup["phi"])*setup["ll2"] /2, np.cos(setup["phi"])*setup["ll2"] /2),
                            (np.sin(setup["phi"])*setup["ll2"] /2 - np.cos(setup["phi"])*5, np.cos(setup["phi"])*setup["ll2"] /2 + np.sin(setup["phi"])*5), (np.sin(setup["phi"])*setup["ll2"] /2 + np.cos(setup["phi"])*10, np.cos(setup["phi"])*setup["ll2"] /2 - np.sin(setup["phi"])*10),
                            setup["lm1"], setup["lm2"], pm_space),
-        "torso": Torso((centres["hip"][0] - np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 -0.25), centres["hip"][1] - np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 -0.25)),
-                       (- np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25), - np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)), (np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25), np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)),#a1,b1
-                       6, (- np.sin(setup["phi"]+np.pi/4)*(2 + setup["tl"] / 2 +0.25), - np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)), setup["tm"], setup["head"], pm_space),
+        "torso": Torso((centres["hip"][0] - np.sin(setup["phi"]+np.pi/4) * (setup["tl"] / 2 - 0.25),
+                        centres["hip"][1] - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 - 0.25)),
+                       (- np.sin(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25),
+                        - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)), 
+                       (np.sin(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25),
+                       np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)),  # a1,b1
+                       6, (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25),
+                           - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25)), #head
+                       (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25 - 3.5),
+                        - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25 - 3.5)),
+                       (- np.sin(setup["phi"]+np.pi/4) * (2 + setup["tl"] / 2 + 0.25 - 3.5 + setup["al"]),
+                        - np.cos(setup["phi"]+np.pi/4) * (setup["tl"] / 2 + 0.25 - 3.5 + setup["al"])),
+                       setup["tm"], setup["head"], setup["arms"], pm_space),
     }
 
     joints = {
