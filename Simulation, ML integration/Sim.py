@@ -79,7 +79,7 @@ class Swing:
 
 class Torso:
     'constructing Naos torso and head'
-     def __init__(self, pos, a1, b1, r2, a2, a3, b3, m1, m2, m3, space):
+    def __init__(self, pos, a1, b1, r2, a2, a3, b3, m1, m2, m3, space):
         'position of CoM, a1= torso start, b1=torso end, r2=head radius, a2=head offset, m=mass'
 
         self.body = pymunk.Body()
