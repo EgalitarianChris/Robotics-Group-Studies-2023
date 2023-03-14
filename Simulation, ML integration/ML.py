@@ -266,7 +266,8 @@ def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_cou
     env = CustomEnv()
     if cores > 1:
         vecenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
-        PPO("MlpPolicy", vecenv, verbose=1, tensorboard_log="./tensorboard/",learning_rate=0.0002, ent_coef=0.0001, clip_range=0.1, gamma=0.1)
+        model = PPO("MlpPolicy", vecenv, verbose=1, tensorboard_log="./tensorboard/",
+                    learning_rate=0.0002, ent_coef=0.0001, clip_range=0.1, gamma=0.1)
         
     else:
         model = PPO("MlpPolicy", env, verbose=2, tensorboard_log="./tensorboard/")
