@@ -20,6 +20,7 @@ class Rod:
         
         space.add(self.body, rod)
 
+
 class Leg:
     'class to construct the leg'
     def __init__(self, pos, a1, b1, a2, b2, m1, m2, space, radius=2):
@@ -42,6 +43,7 @@ class Leg:
         foot.color = (0, 255, 0, 0)
         
         space.add(self.body, leg, foot)
+
 
 class Swing:
     'class that constructs the swing and Naos attatched leg segment'
@@ -74,6 +76,7 @@ class Swing:
         
         space.add(self.body, bar, vertical, base, leg)
 
+
 class Torso:
     'constructing Naos torso and head'
     def __init__(self, pos, a1, b1, r2, a2, m1, m2, space):
@@ -96,6 +99,7 @@ class Torso:
         
         space.add(self.body, self.torso, self.head)
 
+
 class Simplemotor:
     'class to add a motor of constant speed to a joint (automatically replaces old motors)'
     def __init__(self, body1, body2, rate, space, switch="off"):
@@ -103,6 +107,7 @@ class Simplemotor:
         
         self.simplemotor = pymunk.SimpleMotor(body1, body2, rate)
         space.add(self.simplemotor)
+
 
 class Pivotjoint:
     def __init__(self, body1, body2, con1, con2, space, err = pow(1-0.1,30)):
@@ -112,6 +117,7 @@ class Pivotjoint:
         joint.error_bias = pow(1-0.4, 60)
         space.add(joint)
 
+
 class RotaryLimitJoint:
     'adds an angle limit to a previously existing joint'
     def __init__(self, body1, body2, min, max, space):
@@ -119,6 +125,7 @@ class RotaryLimitJoint:
         
         joint = pymunk.constraints.RotaryLimitJoint(body1, body2, min, max)
         space.add(joint)
+
         
 class Dampedrotaryspring:
     'adds damping to a previously existing joint'
@@ -194,16 +201,16 @@ def setup_simulation():
                            (-np.sin(setup["phi"])*setup["ll2"] /2, -np.cos(setup["phi"])*setup["ll2"] /2), (np.sin(setup["phi"])*setup["ll2"] /2, np.cos(setup["phi"])*setup["ll2"] /2),
                            (np.sin(setup["phi"])*setup["ll2"] /2 - np.cos(setup["phi"])*5, np.cos(setup["phi"])*setup["ll2"] /2 + np.sin(setup["phi"])*5), (np.sin(setup["phi"])*setup["ll2"] /2 + np.cos(setup["phi"])*10, np.cos(setup["phi"])*setup["ll2"] /2 - np.sin(setup["phi"])*10),
                            setup["lm1"], setup["lm2"], pm_space),
-        "torso": Torso((centres["hip"][0] - np.sin(setup["phi"])*(setup["tl"] / 2 -0.25), centres["hip"][1] - np.cos(setup["phi"])*(setup["tl"] / 2 -0.25)),
-                       (- np.sin(setup["phi"])*(setup["tl"] / 2 +0.25), - np.cos(setup["phi"])*(setup["tl"] / 2 +0.25)), (np.sin(setup["phi"])*(setup["tl"] / 2 +0.25), np.cos(setup["phi"])*(setup["tl"] / 2 +0.25)),#a1,b1
-                       6, (- np.sin(setup["phi"])*(2 + setup["tl"] / 2 +0.25), - np.cos(setup["phi"])*(setup["tl"] / 2 +0.25)), setup["tm"], setup["head"], pm_space),
+        "torso": Torso((centres["hip"][0] - np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 -0.25), centres["hip"][1] - np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 -0.25)),
+                       (- np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25), - np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)), (np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25), np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)),#a1,b1
+                       6, (- np.sin(setup["phi"]+np.pi/4)*(2 + setup["tl"] / 2 +0.25), - np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)), setup["tm"], setup["head"], pm_space),
     }
 
     joints = {
         # Joints between the bodies (body 1, body 2, coordinates of joint realtive to centre of body 1, coordinates relative to body 2 centre)
         "torso": Pivotjoint(bodies["swing"].body, bodies["torso"].body,
                           (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) , np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2)),
-                          (np.sin(setup["phi"])*(setup["tl"] / 2 +0.25), np.cos(setup["phi"])*(setup["tl"] / 2 +0.25)),
+                          (np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25), np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)),
                           pm_space),
         "leg": Pivotjoint(bodies["swing"].body, bodies["leg"].body,
                             (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) + np.cos(setup["phi"])*setup["sl4"][1], np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) - np.sin(setup["phi"])*setup["sl4"][1]),
@@ -232,18 +239,19 @@ def setup_simulation():
     }
     return {"pm_space": pm_space, "motors": motors, "bodies": bodies, "joints": joints, "speeds": speeds, "setup": setup}
 
+
 def perform_action(environment, action, simulation_data):
     #redefining actions to be in degrees and degrees per second from the -1, 1 range used by machine learning
     #action = (leg angle, leg speed, torso angle, torso speed)
-    action = np.array([action[0]*63 + 32,
+    action = np.array([action[0]*(-5.271 - 67.895)/2 + (-5.271 + 67.895)/2,
                        action[1]*190.3 + 190.3,
-                       action[2]*32.5 + 5.5,
+                       action[2]*(29.186 - 70.054)/2 + (29.186 + 70.054)/2,
                        action[3]*190.3 + 190.3])
     
     #get angle of leg and torso relative to the swing in degrees (defined as 0 perpendicular to the swing)
     leg_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[2].angle - environment.simulation_data["pm_space"].bodies[1].angle)
-    torso_angle = - 180/np.pi * (environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
-
+    torso_angle = - 180/np.pi * (-np.pi/4 + environment.simulation_data["pm_space"].bodies[3].angle - environment.simulation_data["pm_space"].bodies[1].angle)
+    
     #arbitrary acceleration (units of change in speed per tick)
     acceleration = 1
     
@@ -263,7 +271,7 @@ def perform_action(environment, action, simulation_data):
 
 
     #if target is positive (anti-clockwise)
-    if action[0] > 0:
+    if action[0] > leg_angle:
         #if the leg wont reach its target within the time needed to slow to a stop
         if action[0] >= leg_angle + (time_needed_l * (180/np.pi) * environment.simulation_data["speeds"][0]*environment.simulation_data["setup"]["step_length"]*environment.simulation_data["setup"]["sim_steps_per_decision"]):
             #if the speed is at the target speed - pass
@@ -288,7 +296,7 @@ def perform_action(environment, action, simulation_data):
                 environment.simulation_data["speeds"][0] = 0
     
     #same idea as above but for negative (clockwise) motion
-    elif action[0] < 0:
+    elif action[0] < leg_angle:
         if action[0] <= leg_angle + (time_needed_l * (180/np.pi) * environment.simulation_data["speeds"][0]*environment.simulation_data["setup"]["step_length"]*environment.simulation_data["setup"]["sim_steps_per_decision"]):
             if environment.simulation_data["speeds"][0] == signs[0]:
                 pass
@@ -317,7 +325,7 @@ def perform_action(environment, action, simulation_data):
     add_motor_l(simulation_data, environment.simulation_data["speeds"][0])
     
     #same as above but for the torso rather than the leg
-    if action[2] > 0:
+    if action[2] > torso_angle:
         if action[2] >= torso_angle + (time_needed_t * (180/np.pi) * environment.simulation_data["speeds"][1]*environment.simulation_data["setup"]["step_length"]*environment.simulation_data["setup"]["sim_steps_per_decision"]):
             if environment.simulation_data["speeds"][1] == signs[1]:
                 pass
@@ -333,7 +341,7 @@ def perform_action(environment, action, simulation_data):
             else:
                 environment.simulation_data["speeds"][1] = 0
     
-    elif action[2] < 0:
+    elif action[2] < torso_angle:
         if action[2] <= torso_angle + (time_needed_t * (180/np.pi) * environment.simulation_data["speeds"][1]*environment.simulation_data["setup"]["step_length"]*environment.simulation_data["setup"]["sim_steps_per_decision"]):
             if environment.simulation_data["speeds"][1] == signs[1]:
                 pass
