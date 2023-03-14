@@ -365,15 +365,28 @@ def tensor_checks(params, run_length = 3600, episodes=10000):
             print(f"Time exceeded maximum run length of {run_length} seconds.")
             break
 
-
-
+def hyperparameter_tests(params, episodes = 10000):
+    env = CustomEnv()
+    for num, i  in enumerate(params):
+        vecenv = make_vec_env(CustomEnv, n_envs=(os.cpu_count() - 1), vec_env_cls=SubprocVecEnv)
+        model = PPO("MlpPolicy", vecenv, verbose=1, tensorboard_log="./tensorboard/",
+                    learning_rate=i[0], ent_coef=i[1], clip_range=i[2], batch_size = i[3], n_epochs = i[4], gamma = i[5])
+        filename = f"eps_{episodes}_lr_{i[0]}_ent_{i[1]}_clip_{i[2]}_batch_{i[3]}_epoch_{i[4]}_gamma_{i[5]}"
+        model.learn(total_timesteps= env.run_duration * episodes, tb_log_name = filename)
+        model.save(filename)
+        del model
+        
 if __name__ == "__main__":
     # main()
-    ppo_main()
+    #ppo_main()
     # run_learned()
     # continue_learning()
-    hyperparameters = [[0.0001, 0.0001, 0.1], [0.0001, 0.0002, 0.1], [0.0001, 0.0003, 0.1], [0.0001, 0.0002, 0.2],
-                       [0.0001, 0.0003, 0.2], [0.0002, 0.0002, 0.2], [0.0003, 0.0002, 0.2], [0.0003, 0.0003, 0.1]]
+    # come up with lists of hyperparameters to test
+    hyperparameters = [[0.0001, 0.0001, 0.1, 64, 10, 0.999],[0.0001, 0.0001, 0.1, 64, 10, 0.997],
+                       [0.0001, 0.0001, 0.1, 64, 10, 0.995],[0.0001, 0.0001, 0.1, 64, 10, 0.993],
+                       [0.0001, 0.0001, 0.1, 64, 10, 0.991],[0.0001, 0.0001, 0.1, 64, 10, 0.985],
+                       [0.0001, 0.0001, 0.1, 64, 10, 0.98],[0.0001, 0.0001, 0.1, 64, 10, 0.97],
+                       [0.0001, 0.0001, 0.1, 64, 10, 0.96],[0.0001, 0.0001, 0.1, 64, 10, 0.95]]
 
-    #tensor_checks(hyperparameters, run_length=10800)
+    tensor_checks(hyperparameters, run_length=10800)
     #long_term_learning(run_length=14400)
