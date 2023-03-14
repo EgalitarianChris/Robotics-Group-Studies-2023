@@ -191,8 +191,6 @@ def setup_simulation():
         "sc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] + np.sin(setup["phi"])*setup["sl2"] /2, setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + np.cos(setup["phi"])*setup["sl2"] / 2),
         "lc": (setup["bg"][0] + np.sin(setup["phi"])*setup["rl"] + np.sin(setup["phi"])*(setup["sl2"] - setup["sl4"][0]) + np.cos(setup["phi"])*setup["sl4"][1] + np.sin(setup["phi"])*setup["ll1"], setup["bg"][1] + np.cos(setup["phi"])*setup["rl"] + np.cos(setup["phi"])*(setup["sl2"] - setup["sl4"][0]) - np.sin(setup["phi"])*setup["sl4"][1] + np.cos(setup["phi"])*setup["ll1"]),
         "hip": (setup["bg"][0] + np.sin(setup["phi"])*(setup["rl"] + setup["sl2"] - setup["sl4"][0] /2), setup["bg"][1] + np.cos(setup["phi"])*(setup["rl"] + setup["sl2"] - setup["sl4"][0] /2)),
-        # "a1c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) / 2),
-        # "a2c": (setup["bg"][0] + setup["a1"]*np.cos(np.pi*(90-30.74)/180) + setup["a2"]*np.cos(np.pi*(54.5-30.74)/180) / 2, setup["bg"][1] + setup["rl"] + setup["sl2"] - setup["tl"] + setup["a1"]*np.sin(np.pi*(90-30.74)/180) - setup["a2"]*np.sin(np.pi*(54.5-30.74)/180) / 2)
     }
 
     bodies = {
