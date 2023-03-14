@@ -266,7 +266,8 @@ def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_cou
     env = CustomEnv()
     if cores > 1:
         vecenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
-        model = PPO("MlpPolicy", vecenv, verbose=2, tensorboard_log="./tensorboard/")
+        PPO("MlpPolicy", vecenv, verbose=1, tensorboard_log="./tensorboard/",learning_rate=0.0002, ent_coef=0.0001, clip_range=0.1, gamma=0.1)
+        
     else:
         model = PPO("MlpPolicy", env, verbose=2, tensorboard_log="./tensorboard/")
     model.learn(total_timesteps= env.run_duration * episodes)
@@ -367,11 +368,11 @@ def tensor_checks(params, run_length = 3600, episodes=10000):
 
 if __name__ == "__main__":
     # main()
-    #ppo_main()
+    ppo_main()
     # run_learned()
     # continue_learning()
     hyperparameters = [[0.0001, 0.0001, 0.1], [0.0001, 0.0002, 0.1], [0.0001, 0.0003, 0.1], [0.0001, 0.0002, 0.2],
                        [0.0001, 0.0003, 0.2], [0.0002, 0.0002, 0.2], [0.0003, 0.0002, 0.2], [0.0003, 0.0003, 0.1]]
 
-    tensor_checks(hyperparameters, run_length=10800)
+    #tensor_checks(hyperparameters, run_length=10800)
     #long_term_learning(run_length=14400)
