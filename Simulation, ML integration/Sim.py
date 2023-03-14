@@ -101,7 +101,7 @@ class Torso:
         self.arms = pymunk.Segment(self.body, a3, b3, radius=1.8)
         self.arms.mass = m3
         self.arms.filter = pymunk.ShapeFilter(group=1)
-        self.arms.color = (200, 0, 0, 0)
+        self.arms.color = (200, 0, 200, 0)
 
         space.add(self.body, self.torso, self.head, self.arms)
 
