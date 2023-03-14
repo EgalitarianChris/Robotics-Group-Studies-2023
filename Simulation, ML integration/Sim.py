@@ -259,15 +259,8 @@ def perform_action(environment, action, simulation_data):
     signs = np.sign(np.array([action[0], action[2]]) - np.array([leg_angle, torso_angle])) * (np.pi / 180) * [action[1], action[3]]
     
     #no. of timesteps needed to slow down from a given speed (for leg and torso)
-    if environment.simulation_data["speeds"][0] == 0:
-        time_needed_l = 0
-    else:
-        time_needed_l = abs(environment.simulation_data["speeds"][0])/acceleration
-        
-    if environment.simulation_data["speeds"][1] == 0:
-        time_needed_t = 0
-    else:
-        time_needed_t = abs(environment.simulation_data["speeds"][1])/acceleration
+    time_needed_l = abs(environment.simulation_data["speeds"][0])/acceleration
+    time_needed_t = abs(environment.simulation_data["speeds"][1])/acceleration
 
 
     #if target is positive (anti-clockwise)
