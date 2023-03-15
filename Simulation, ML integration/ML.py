@@ -369,11 +369,12 @@ def hyperparameter_tests(params, episodes = 10000):
     env = CustomEnv()
     for num, i  in enumerate(params):
         vecenv = make_vec_env(CustomEnv, n_envs=(os.cpu_count() - 1), vec_env_cls=SubprocVecEnv)
-        model = PPO("MlpPolicy", vecenv, verbose=1, tensorboard_log="./tensorboard/",
+        model = PPO("MlpPolicy", vecenv, verbose=0, tensorboard_log="./tensorboard/",
                     learning_rate=i[0], ent_coef=i[1], clip_range=i[2], batch_size = i[3], n_epochs = i[4], gamma = i[5])
         filename = f"eps_{episodes}_lr_{i[0]}_ent_{i[1]}_clip_{i[2]}_batch_{i[3]}_epoch_{i[4]}_gamma_{i[5]}"
         model.learn(total_timesteps= env.run_duration * episodes, tb_log_name = filename)
         model.save(filename)
+        print(f"Finished run {num+1}/{len(params)}")
         del model
         
 if __name__ == "__main__":
