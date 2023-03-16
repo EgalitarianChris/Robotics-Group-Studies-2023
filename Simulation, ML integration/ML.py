@@ -1,4 +1,19 @@
-# Import relevent libraries
+"""
+The main machine learning file.
+Contains CustomEnv, the environment which runs and controls
+the simulation integrated within a gym environment.
+
+stable_baselines3 can then use the gym custom environment to
+run machine learning algorithms on, in this file PPO is used.
+
+Functions in this module:
+    - main() runs simulation without any machine learning, takes user inputs
+    - ppo_main() runs basic simulation
+    - run_learned() runs finished policy model in the simulation
+    - continue_learning() loads given file and continues PPO learning
+    - long_term_learning() runs continue_learning() until time limit passed
+    - hyperparameter_tests() tests a list of input hyperparameters
+"""
 import time
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -14,11 +29,21 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 
-# Create gym environment - Contains the machine learning code and the simulation code:
 class CustomEnv(gym.Env):
+    """
+    Creates an environment for stepping the simulation forward taking inputs
+    in the form of "action".
 
-    # Initialising the environment - SINGLE SETUP FUNCTION CALL to be written by simulations team:
+    Inherits from the Gym general environment class.
+
+    Contains both machine learning code and simulation code.
+    """
     def __init__(self):
+        """
+        Initialises the environment, setting starting values for simulation.
+
+        SINGLE SETUP FUNCTION CALL to be written by simulations team.
+        """
         self.run_time = 0
         self.reward = 0
         self.realtime_ep_duration = 50
@@ -36,14 +61,17 @@ class CustomEnv(gym.Env):
         self.window = None
         self.options = None
 
-    def step(self, action=np.zeros(4), dtype=np.single):
+    def step(self, action=np.zeros(4), dtype=np.single) -> tuple:
         """
-        The actual bit where the simulation happens. Ticks everything forward by one timestep
-        and returns values which get passed into PPO.
+        The actual bit where the simulation happens.
+        
+        Ticks everything forward by one timestep and returns values which get passed into PPO.
+
         Parameters
         ----------
         action : array-like
             A normalised array of how the arms and legs intend to move. The default is an array of zeros.
+
         Returns
         -------
         observation : array-like
@@ -57,7 +85,7 @@ class CustomEnv(gym.Env):
         """
         self.simulation_data = perform_action(self, action, self.simulation_data)
         self.last_action = action
-        for i in range(self.sim_steps_per_decision):
+        for _ in range(self.sim_steps_per_decision):
             self.simulation_data["pm_space"].step(self.step_length/self.sim_steps_per_decision)
         # Potentially add random variation in step duration to help train for running on NAO
 
@@ -73,7 +101,10 @@ class CustomEnv(gym.Env):
     def init_render(self):
         """
         Initialises the renderer, is only called to visualise the simulation,
-        it isn't necessary for the machine learning. (NOT RELEVENT TO SIMULATIONS)
+        it isn't necessary for the machine learning.
+
+        (NOT RELEVENT TO SIMULATIONS)
+
         Returns
         -------
         None.
@@ -86,7 +117,10 @@ class CustomEnv(gym.Env):
 
     def render(self):
         """
-        Renders the state of the simulation (NOT RELEVENT TO SIMULATIONS)
+        Renders the state of the simulation
+
+        (NOT RELEVENT TO SIMULATIONS)
+
         Returns
         -------
         None.
@@ -97,10 +131,10 @@ class CustomEnv(gym.Env):
         pygame.display.update()
         self.clock.tick(1/self.step_length)
 
-    # Reset the simulation for the next training run (NOT RELEVENT TO SIMULATIONS)
-    def reset(self):
+    def reset(self) -> np.ndarray:
         """
         Used to initiate a new episode, outputting final observations.
+
         Returns
         -------
         observation : array-like
@@ -112,10 +146,11 @@ class CustomEnv(gym.Env):
         observation = self.get_obs()
         return observation
 
-    def get_obs(self):      #could optimise by making array
+    def get_obs(self) -> np.ndarray:
         """
         Calculates leg, torso, top pivot and combined joint angles and velocities.
         Gets passed into observation array for PPO to use.
+
         Returns
         -------
         observation : array-like
@@ -142,36 +177,38 @@ class CustomEnv(gym.Env):
                                 combined_joint_angle_velocity])
         return observation
 
-    def get_reward(self, observation, action):
+    def get_reward(self, observation: np.ndarray, action: np.ndarray) -> float:
         """
         Takes in observations and uses them to calculate a reward function.
         k_1 through k_4 are parameters used to tweak the importance of different
         behaviour in the neural network.
+
         Parameters
         ----------
         observation : array-like
             Angles and velocities in the swing which gets passed into PPO.
         action : array-like
             Requested leg and torso angles and speeds normalised between -1 and 1.
+
         Returns
         -------
         reward : float
             A score of how successfully the robot is swinging, PPO attempts to
             maximise this.
         """
-        k_1, k_2, k_3, k_4 = 10, 1, 5, 5
-        action = np.array([action[0]*63 + 32,
-                       action[1]*190.3 + 190.3,
-                       action[2]*32.5 + 5.5,
-                       action[3]*190.3 + 190.3])
+        # k_1, k_2, k_3, k_4 = 10, 1, 5, 5
+        # action = np.array([action[0]*63 + 32,
+        #                action[1]*190.3 + 190.3,
+        #                action[2]*32.5 + 5.5,
+        #                action[3]*190.3 + 190.3])
         top_angle, combined_joint_angle  = observation[2:4]
-        reward = top_angle**2
-        penalty = combined_joint_angle**2
-        leg_velocity, torso_velocity = observation[4:6]
-        lv_action = np.sign(observation[0] - action[0])*action[1]
-        tv_action = np.sign(observation[1] - action[2])*action[3]
-        norm_delta_v_leg = np.abs(leg_velocity - lv_action)/720
-        norm_delta_v_torso = np.abs(torso_velocity - tv_action)/720
+        # reward = top_angle**2
+        # penalty = combined_joint_angle**2
+        # leg_velocity, torso_velocity = observation[4:6]
+        # lv_action = np.sign(observation[0] - action[0])*action[1]
+        # tv_action = np.sign(observation[1] - action[2])*action[3]
+        # norm_delta_v_leg = np.abs(leg_velocity - lv_action)/720
+        # norm_delta_v_torso = np.abs(torso_velocity - tv_action)/720
         top_angle_velocity = (self.simulation_data["pm_space"].bodies[0].angular_velocity)
         KE = top_angle_velocity * top_angle_velocity / 2
         PE = (1 - np.cos(top_angle/180*np.pi))
@@ -185,6 +222,7 @@ class CustomEnv(gym.Env):
         Does nothing right now. Ideally, this would output values which aren't
         necessarily known to PPO such as separate reward, penalty and effort
         constituents or potentially the current highest pivot angle attained.
+
         Returns
         -------
         info : dict
@@ -196,6 +234,7 @@ class CustomEnv(gym.Env):
         """
         Stops the program when enough time-steps have been done, otherwise
         increments time by 1.
+
         Returns
         -------
         done : boolean
@@ -212,6 +251,7 @@ def get_events():
     Listens to keystrokes for use with manual simulation.
     If the windows is closed its supposed to quit pygame,
     but this doesn't work right now.
+
     Returns
     -------
     keys_pressed : array-like
@@ -229,6 +269,7 @@ def main():
     Runs the simulation manually, no machine learning here.
     Instantiates the custom Gym environment, listens for keypresses
     then sets action based on input.
+
     Returns
     -------
     None.
@@ -236,7 +277,7 @@ def main():
     # Initialise the simulation:
     environment = CustomEnv()
     environment.init_render()
-    # check_env(environment)
+
     # Run the simulation:
     while True:
         keys_pressed = get_events()
@@ -247,18 +288,20 @@ def main():
         environment.render()
 
 
-def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_count() - 1):
+def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores: int = os.cpu_count() - 1):
     """
     Runs the simulation using stable-baselines3 proximal policy optimisation
     algorithm.
     Episodes are run for a limited amount of time equal to env.run_duration,
     then the simulation is run for a set number of episodes.
+
     Parameters
     ----------
-    filename : string
-        DESCRIPTION. name of file
+    filename : str
+        Filename for the model used
     episodes : int
-        DESCRIPTION. number of episodes
+        Number of episodes the test to be run for
+
     Returns
     -------
     None.
@@ -279,18 +322,22 @@ def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores = os.cpu_cou
     run_learned(filename)
 
 def run_learned(filename = "test_PPO_model_data"):
-    '''
-    Runs the most recently learned PPO-model
+    """
+    Initialises a new CustomEnv() environment and runs the simulation,
+    the model passed in is then used to predict optimal actions and states
+    which are then used in the next timestep.
+    Renders for visualisation using PyGame.
 
     Parameters
     ----------
-    filename - string
-    
+    filename : string
+        Filename for the model used
+
     Returns
     -------
     None.
 
-    '''
+    """
     model = PPO.load(filename)
     print("model loaded\n---------------------------------------------------------")
     env = CustomEnv()
@@ -300,26 +347,27 @@ def run_learned(filename = "test_PPO_model_data"):
     print("starting while loop (running the trained model)")
     while True:
         action, _states = model.predict(obs)
-        print("action:",action)
+        print(f"action: {action}")
         obs, rewards = env.step(action)[0:2]
-        print("observation:",obs,"rewards:",rewards)
+        print(f"observation:{obs}\nrewards: {rewards}")
         env.render()
 
-def continue_learning(filename = "test_PPO_model_data", episodes = 3000, cores = os.cpu_count() - 1):
-    '''
+def continue_learning(filename = "test_PPO_model_data", episodes = 3000, cores: int = os.cpu_count() - 1):
+    """
     Allows you to continue learning with a model that some training has already been done with
 
     Parameters
     ----------
-    filename : string
-        DESCRIPTION. name of file
+    filename : str
+        Filename for the model used
     episodes : int
-        DESCRIPTION. number of episodes
+        Number of episodes to be run for
+
     Returns
     -------
     None.
 
-    '''
+    """
     env = CustomEnv()
     if cores > 1:
         vecenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
@@ -334,14 +382,16 @@ def continue_learning(filename = "test_PPO_model_data", episodes = 3000, cores =
 def long_term_learning(run_length = 3600, filename = "test_PPO_model_data", episodes = 3000):
     """
     Calls the continue_learning() function until a set amount of time has passed.
+
     Parameters
     ----------
     time : int
-        Time in seconds to run ML for.
-    filename : string
-        Name of file
+        Time in seconds to run ML for
+    filename : str
+        Filename for the model to be saved to
     episodes : int
-        Number of episodes
+        Number of episodes for each test to be run for
+
     Returns
     -------
     None.
@@ -352,21 +402,50 @@ def long_term_learning(run_length = 3600, filename = "test_PPO_model_data", epis
         dif = time.time() - start
         continue_learning(filename, episodes)
 
-def hyperparameter_tests(params, episodes = 10000):
+def hyperparameter_tests(params: list, episodes = 10000, cores = os.cpu_count() - 1):
+    """
+    Tests a list of many hyperparameters, saves the model and tensorboard data.
+    Tested hyperparameters (in order) are:
+        - Learning rate
+        - Entropy coefficient
+        - Clipping range
+        - Mini-batch size
+        - Epoch number
+        - Discount factor
+    
+    Parameters
+    ----------
+    params : list
+        Multidimensional list containing sets of hyperparameters to test
+    episodes : int
+        Number of episodes to test each set of hyperparameters for
+    cores : int
+        Number of cores to run simultaneously on.
+        DO NOT SET HIGHER THAN NUMBER OF LOGIC CORES AVAILABLE
+
+    Returns
+    -------
+    None.
+    
+    """
     env = CustomEnv()
+    print(f"Beginning hyperparameter tests using {cores}/{os.cpu_count()} cores")
+    if cores > 1:
+        modelenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
+    else:
+        modelenv = CustomEnv()
     for num, i  in enumerate(params):
-        vecenv = make_vec_env(CustomEnv, n_envs=(os.cpu_count() - 1), vec_env_cls=SubprocVecEnv)
-        model = PPO("MlpPolicy", vecenv, verbose=0, tensorboard_log="./tensorboard/",
+        model = PPO("MlpPolicy", modelenv, verbose=0, tensorboard_log="./tensorboard/",
                     learning_rate=i[0], ent_coef=i[1], clip_range=i[2], batch_size = i[3], n_epochs = i[4], gamma = i[5])
         filename = f"eps_{episodes}_lr_{i[0]}_ent_{i[1]}_clip_{i[2]}_batch_{i[3]}_epoch_{i[4]}_gamma_{i[5]}"
-        model.learn(total_timesteps= env.run_duration * episodes, tb_log_name = filename)
+        model.learn(total_timesteps = env.run_duration * episodes)
         model.save(filename)
         print(f"Finished run {num+1}/{len(params)}")
         del model
-        
+
 if __name__ == "__main__":
     # main()
-    #ppo_main()
+    # ppo_main()
     # run_learned()
     # continue_learning()
     # come up with lists of hyperparameters to test
