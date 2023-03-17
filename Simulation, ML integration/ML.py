@@ -60,6 +60,7 @@ class CustomEnv(gym.Env):
         self.run_duration = self.realtime_ep_duration / self.step_length
         self.window = None
         self.options = None
+        self.last_action = 0
 
     def step(self, action=np.zeros(4), dtype=np.single) -> tuple:
         """
@@ -156,20 +157,26 @@ class CustomEnv(gym.Env):
         observation : array-like
             Angles and velocities in the swing which gets passed into PPO.
         """
-        leg_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angle - self.simulation_data["pm_space"].bodies[1].angle)
-        leg_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
+        leg_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angle -
+                                 self.simulation_data["pm_space"].bodies[1].angle)
+        leg_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[3].angular_velocity -
+                                          self.simulation_data["pm_space"].bodies[1].angular_velocity)
         # leg_angle_acc = (leg_angle_velocity - self.observation[4]) / self.step_length
 
-        torso_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angle -self.simulation_data["pm_space"].bodies[1].angle)
-        torso_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angular_velocity -self.simulation_data["pm_space"].bodies[1].angular_velocity)
+        torso_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angle -
+                                   self.simulation_data["pm_space"].bodies[1].angle)
+        torso_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[2].angular_velocity -
+                                            self.simulation_data["pm_space"].bodies[1].angular_velocity)
         # torso_angle_acc = (torso_angle_velocity - self.observation[5]) / self.step_length
 
-        top_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle - self.simulation_data["setup"]["phi"])
+        top_angle = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angle -
+                                 self.simulation_data["setup"]["phi"])
         top_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity)
         # top_angle_acc = (top_angle_velocity - self.observation[6]) / self.step_length
 
         combined_joint_angle = top_angle - 180/np.pi * (self.simulation_data["pm_space"].bodies[1].angle)
-        combined_joint_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity - self.simulation_data["pm_space"].bodies[1].angular_velocity)
+        combined_joint_angle_velocity = 180/np.pi * (self.simulation_data["pm_space"].bodies[0].angular_velocity -
+                                                     self.simulation_data["pm_space"].bodies[1].angular_velocity)
         # combined_joint_angle_acc = (combined_joint_angle_velocity - self.observation[7]) / self.step_length
 
         observation = np.array([leg_angle, torso_angle, top_angle, combined_joint_angle,
@@ -209,13 +216,13 @@ class CustomEnv(gym.Env):
         # tv_action = np.sign(observation[1] - action[2])*action[3]
         # norm_delta_v_leg = np.abs(leg_velocity - lv_action)/720
         # norm_delta_v_torso = np.abs(torso_velocity - tv_action)/720
-        top_angle_velocity = (self.simulation_data["pm_space"].bodies[0].angular_velocity)
-        KE = top_angle_velocity * top_angle_velocity / 2
-        PE = (1 - np.cos(top_angle/180*np.pi))
+        top_angle_velocity = self.simulation_data["pm_space"].bodies[0].angular_velocity
+        kinetic_energy = top_angle_velocity * top_angle_velocity / 2
+        potential_energy = 1 - np.cos(top_angle/180*np.pi)
         k = 1/9
-        E_tot = k*KE + PE
+        total_energy = k*kinetic_energy + potential_energy
         # print(k_1*reward, k_2*penalty, k_3*norm_delta_v_leg, k_4*norm_delta_v_torso)
-        return E_tot
+        return total_energy
 
     def get_info(self):
         """
@@ -311,7 +318,7 @@ def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores: int = os.cp
         vecenv = make_vec_env(CustomEnv, n_envs=cores, vec_env_cls=SubprocVecEnv)
         model = PPO("MlpPolicy", vecenv, verbose=1, tensorboard_log="./tensorboard/",
                     learning_rate=0.0002, ent_coef=0.0001, clip_range=0.1, gamma=0.1)
-        
+
     else:
         model = PPO("MlpPolicy", env, verbose=2, tensorboard_log="./tensorboard/")
     model.learn(total_timesteps= env.run_duration * episodes)
@@ -436,7 +443,9 @@ def hyperparameter_tests(params: list, episodes = 10000, cores = os.cpu_count() 
         modelenv = CustomEnv()
     for num, i  in enumerate(params):
         model = PPO("MlpPolicy", modelenv, verbose=0, tensorboard_log="./tensorboard/",
-                    learning_rate=i[0], ent_coef=i[1], clip_range=i[2], batch_size = i[3], n_epochs = i[4], gamma = i[5])
+                    learning_rate=i[0], ent_coef=i[1], clip_range=i[2], batch_size = i[3],
+                    n_epochs = i[4], gamma = i[5])
+
         filename = f"eps_{episodes}_lr_{i[0]}_ent_{i[1]}_clip_{i[2]}_batch_{i[3]}_epoch_{i[4]}_gamma_{i[5]}"
         model.learn(total_timesteps = env.run_duration * episodes)
         model.save(filename)
@@ -445,7 +454,7 @@ def hyperparameter_tests(params: list, episodes = 10000, cores = os.cpu_count() 
 
 if __name__ == "__main__":
     # main()
-    # ppo_main()
+    ppo_main()
     # run_learned()
     # continue_learning()
     # come up with lists of hyperparameters to test
