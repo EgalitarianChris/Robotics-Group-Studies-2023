@@ -203,26 +203,30 @@ class CustomEnv(gym.Env):
             A score of how successfully the robot is swinging, PPO attempts to
             maximise this.
         """
-        # k_1, k_2, k_3, k_4 = 10, 1, 5, 5
-        # action = np.array([action[0]*63 + 32,
-        #                action[1]*190.3 + 190.3,
-        #                action[2]*32.5 + 5.5,
-        #                action[3]*190.3 + 190.3])
+        k_1, k_2, k_3, k_4 = 1, 0.02, 0.2, 0
+        action = np.array([action[0]*((90--5.271) - (90-67.895))/2 + ((90--5.271) + (90-67.895))/2,
+                       action[1]*190.3 + 190.3,
+                       action[2]*((90-29.186) - (90-70.054))/2 + ((90-29.186) + (90-70.054))/2,
+                       action[3]*190.3 + 190.3])
         top_angle, combined_joint_angle  = observation[2:4]
-        # reward = top_angle**2
-        # penalty = combined_joint_angle**2
-        # leg_velocity, torso_velocity = observation[4:6]
-        # lv_action = np.sign(observation[0] - action[0])*action[1]
-        # tv_action = np.sign(observation[1] - action[2])*action[3]
-        # norm_delta_v_leg = np.abs(leg_velocity - lv_action)/720
-        # norm_delta_v_torso = np.abs(torso_velocity - tv_action)/720
-        top_angle_velocity = self.simulation_data["pm_space"].bodies[0].angular_velocity
-        kinetic_energy = top_angle_velocity * top_angle_velocity / 2
-        potential_energy = 1 - np.cos(top_angle/180*np.pi)
-        k = 1/9
-        total_energy = k*kinetic_energy + potential_energy
+        reward = np.abs(top_angle)
+        penalty = np.abs(combined_joint_angle) * np.abs(top_angle)
+        leg_velocity, torso_velocity = observation[4:6]
+        lv_action = np.sign(observation[0] - action[0])*action[1]
+        tv_action = np.sign(observation[1] - action[2])*action[3]
+        norm_delta_v_leg = np.abs(leg_velocity - lv_action)/760.6
+        norm_delta_v_torso = np.abs(torso_velocity - tv_action)/760.6
+        # top_angle_velocity = (self.simulation_data["pm_space"].bodies[0].angular_velocity)
+        # KE = top_angle_velocity * top_angle_velocity / 2
+        # PE = (1 - np.cos(top_angle/180*np.pi))
+        # k = 1/9
+        # E_tot = k*KE + PE
+        delta_v = (norm_delta_v_leg + norm_delta_v_torso) * np.abs(top_angle)
+        leg_hold = holding(self, 2, ((90--5.271) + (90-67.895))/2, ((90--5.271) - (90-67.895)))
+        torso_hold = holding(self, 3, ((90-29.186) + (90-70.054))/2, ((90-29.186) - (90-70.054)))
+        hold = (leg_hold + torso_hold) * np.abs(top_angle)
         # print(k_1*reward, k_2*penalty, k_3*norm_delta_v_leg, k_4*norm_delta_v_torso)
-        return total_energy
+        return k_1*reward, k_2*penalty, k_3*delta_v, k_4*hold
 
     def get_info(self):
         """
