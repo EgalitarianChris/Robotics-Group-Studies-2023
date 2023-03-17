@@ -9,11 +9,11 @@ Functions in this module:
     - a2c_test() tests A2C algorithm in the custom gym
     environment
 """
-from ML import CustomEnv, run_learned
+import os
+from ML import CustomEnv
 from stable_baselines3 import A2C
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
-import os
 
 def a2c_test(episodes = 1000, filename = "a2c_test"):
     """
@@ -29,7 +29,8 @@ def a2c_test(episodes = 1000, filename = "a2c_test"):
     
     Returns
     -------
-        None
+        filename : str
+            Returns the same filename passed in
     """
     env = CustomEnv()
     vecenv = make_vec_env(CustomEnv, n_envs=os.cpu_count() - 1, vec_env_cls=SubprocVecEnv)
