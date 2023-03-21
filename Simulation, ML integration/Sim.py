@@ -164,9 +164,9 @@ def setup_simulation():
         "phi": -np.pi / 12, #initial angle of the top joint
 
         # lengths /cm
-        "rl": 151 + 7, #rod length
+        "rl": 151, #rod length
         "sl1": 16, #swing bar length
-        "sl2": 19 + 5, #swing vertical length
+        "sl2": 19 + 12, #swing vertical length
         "sl3": 17, #swing base length
         "sl4": [8,10], #nao upper leg [width, length]
         "ll1": 14, #lower leg length
@@ -175,8 +175,8 @@ def setup_simulation():
         "al": 26.0, #arm length
 
         # masses /kg (numbered same as lengths)
-        "rm": 1.235 + 0.381 / 2,
-        "sm1": 0.381 / 2,
+        "rm": 1.235,
+        "sm1": 0.381,
         "sm2": 1.026,
         "sm3": 0.131 * 2 + 0.070 + 0.390 * 2,
         "sm4": 0.603* 2 + 0.134,
@@ -207,8 +207,8 @@ def setup_simulation():
 
         "swing": Swing(centres["sc"],
                        #horizontal bar start and end points
-                       (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2),
-                       (np.cos(setup["phi"])*setup["sl1"] - np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2 - np.sin(setup["phi"])*setup["sl1"]),
+                       (-np.sin(setup["phi"])*(setup["sl2"]-12)/2, -np.cos(setup["phi"])*(setup["sl2"]-12) / 2),
+                       (np.cos(setup["phi"])*setup["sl1"] - np.sin(setup["phi"])*(setup["sl2"]-12) /2, -np.cos(setup["phi"])*(setup["sl2"]-12) / 2 - np.sin(setup["phi"])*setup["sl1"]),
                        #vertical rod start and end points
                        (-np.sin(setup["phi"])*setup["sl2"] /2, -np.cos(setup["phi"])*setup["sl2"] / 2),
                        (np.sin(setup["phi"])*setup["sl2"] /2, np.cos(setup["phi"])*setup["sl2"] / 2),
