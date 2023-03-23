@@ -275,7 +275,7 @@ def get_events():
     return pygame.key.get_pressed()
 
 
-def main():
+def run_simulation():
     """
     Runs the simulation manually, no machine learning here.
     Instantiates the custom Gym environment, listens for keypresses
@@ -299,7 +299,7 @@ def main():
         environment.render()
 
 
-def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores: int = os.cpu_count() - 1):
+def train_PPO(filename="test_PPO_model_data", episodes = 3000, cores: int = os.cpu_count() - 1):
     """
     Runs the simulation using stable-baselines3 proximal policy optimisation
     algorithm.
@@ -332,7 +332,7 @@ def ppo_main(filename="test_PPO_model_data", episodes = 3000, cores: int = os.cp
 
     run_learned(filename)
 
-def run_learned(filename = "test_PPO_model_data"):
+def run_learned(filename = "test_PPO_model_data",logging=False):
     """
     Initialises a new CustomEnv() environment and runs the simulation,
     the model passed in is then used to predict optimal actions and states
@@ -350,12 +350,9 @@ def run_learned(filename = "test_PPO_model_data"):
 
     """
     model = PPO.load(filename)
-    print("model loaded\n---------------------------------------------------------")
     env = CustomEnv()
     obs = env.reset()
-    print("initialising renderer")
     env.init_render()
-    print("starting while loop (running the trained model)")
     while True:
         action, _states = model.predict(obs)
         print(f"action: {action}")
@@ -457,15 +454,15 @@ def hyperparameter_tests(params: list, episodes = 10000, cores = os.cpu_count() 
         del model
 
 if __name__ == "__main__":
-    # main()
-    ppo_main()
-    # run_learned()
+    # run_simulation()
+    train_PPO()
+    # run_learned("PPO_test",True)
     # continue_learning()
     # come up with lists of hyperparameters to test
-    hyperparameters = [[0.0001, 0.0001, 0.1, 64, 10, 0.999],[0.0001, 0.0001, 0.1, 64, 10, 0.997],
-                       [0.0001, 0.0001, 0.1, 64, 10, 0.995],[0.0001, 0.0001, 0.1, 64, 10, 0.993],
-                       [0.0001, 0.0001, 0.1, 64, 10, 0.991],[0.0001, 0.0001, 0.1, 64, 10, 0.985],
-                       [0.0001, 0.0001, 0.1, 64, 10, 0.98],[0.0001, 0.0001, 0.1, 64, 10, 0.97],
-                       [0.0001, 0.0001, 0.1, 64, 10, 0.96],[0.0001, 0.0001, 0.1, 64, 10, 0.95]]
+#     hyperparameters = [[0.0001, 0.0001, 0.1, 64, 10, 0.999],[0.0001, 0.0001, 0.1, 64, 10, 0.997],
+#                        [0.0001, 0.0001, 0.1, 64, 10, 0.995],[0.0001, 0.0001, 0.1, 64, 10, 0.993],
+#                        [0.0001, 0.0001, 0.1, 64, 10, 0.991],[0.0001, 0.0001, 0.1, 64, 10, 0.985],
+#                        [0.0001, 0.0001, 0.1, 64, 10, 0.98],[0.0001, 0.0001, 0.1, 64, 10, 0.97],
+#                        [0.0001, 0.0001, 0.1, 64, 10, 0.96],[0.0001, 0.0001, 0.1, 64, 10, 0.95]]
 
     #long_term_learning(run_length=14400)
