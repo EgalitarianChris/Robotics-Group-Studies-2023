@@ -79,7 +79,7 @@ class Swing:
 
 
 class Torso:
-    'constructing Naos torso and head'
+    'constructing Naos torso, head, and arms'
     def __init__(self, pos, a1, b1, r2, a2, a3, b3, m1, m2, m3, space):
         'position of CoM, a1= torso start, b1=torso end, r2=head radius, a2=head offset, m=mass'
 
@@ -138,7 +138,7 @@ class Dampedrotaryspring:
     def __init__(self, body1, body2, angle, stiff, damp, space):
         """two bodies and, a rest angle, a stiffness and a damping factor."""
 
-        # only really used for top joint and it wouldnt work well for others,
+        # used for top joint and swing joint
         joint = pymunk.constraints.DampedRotarySpring(body1, body2, angle, stiff, damp)
         space.add(joint)
 
@@ -175,16 +175,17 @@ def setup_simulation():
         "al": 26.0, #arm length
 
         # masses /kg (numbered same as lengths)
-        "rm": 1.235,
-        "sm1": 0.381,
-        "sm2": 1.026,
-        "sm3": 0.131 * 2 + 0.070 + 0.390 * 2,
-        "sm4": 0.603* 2 + 0.134,
-        "lm1": 0.292 * 2 + 0.134,
-        "lm2": 0.162 * 2 + 0.134,
-        "tm": 1.050 + 0.064 + 0.075 + 0.070,
-        "head": 0.605,
-        "arms": 0.07504 + 0.15794 + 0.15777 + 0.06483*2 + 0.0777*2 + 0.18533*2
+        # joint masses are split between the components
+        "rm": 1.235, #rod mass
+        "sm1": 0.381, #swing bar mass
+        "sm2": 1.026, #swing vertical mass
+        "sm3": 0.131 * 2 + 0.070 + 0.390 * 2, #swing base mass
+        "sm4": 0.603* 2 + 0.134, #nao upper leg mass
+        "lm1": 0.292 * 2 + 0.134, #lower leg mass
+        "lm2": 0.162 * 2 + 0.134, #foot mass
+        "tm": 1.050 + 0.064 + 0.075 + 0.070, #torso mass
+        "head": 0.605, #head mass
+        "arms": 0.07504 + 0.15794 + 0.15777 + 0.06483*2 + 0.0777*2 + 0.18533*2 #total arm mass
     }
 
     centres = {
@@ -197,7 +198,7 @@ def setup_simulation():
 
     bodies = {
         # Bodies added to the simulation
-        #(centre of body, cordinates from centre to an end of each segment)
+        # (centre of body, cordinates from centre to an end of each segment)
         "rod": Rod(centres["rc"],
                    #((end 1 x pos, end 1 y pos), (end 2 x pos, end 2 y pos))
                    (-np.sin(setup["phi"])*setup["rl"] / 2, -np.cos(setup["phi"])*setup["rl"] / 2),
@@ -246,7 +247,7 @@ def setup_simulation():
     }
 
     joints = {
-        # Joints between the bodies (body 1, body 2, coordinates of joint realtive to centre of body 1, coordinates relative to body 2 centre)
+        # Joints between the bodies (body 1, body 2, coordinates of joint realtive to centre of body 1, coordinates relative to body 2 centre, space)
         "torso": Pivotjoint(bodies["swing"].body, bodies["torso"].body,
                           (np.sin(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2) , np.cos(setup["phi"])*(setup["sl2"] / 2 - setup["sl4"][0] /2)),
                           (np.sin(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25), np.cos(setup["phi"]+np.pi/4)*(setup["tl"] / 2 +0.25)),
@@ -269,7 +270,7 @@ def setup_simulation():
         # limit on swing joint to make the system comparable to the real world system
         "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3 -setup["phi"], np.pi/3 -setup["phi"], pm_space),
 
-        # damping on the top joint (tip) and swing joint (tap)
+        # damping on the top joint (tip) and swing joint (tap), only damping argument relevant
         "tip": Dampedrotaryspring(background, bodies["rod"].body, 0, 0, 1922, pm_space),
         "tap": Dampedrotaryspring(bodies["rod"].body, bodies["swing"].body, 0, 0, -92.82, pm_space)
     }
@@ -299,7 +300,7 @@ def perform_action(environment, action, simulation_data):
     #arbitrary acceleration (units of change in speed per tick)
     acceleration = 1
 
-    #target speeds but with directions defined aswell
+    #target speeds but with directions defined as well
     signs = np.sign(np.array([action[0], action[2]]) - np.array([leg_angle, torso_angle])) * (np.pi / 180) * [action[1], action[3]]
 
     #no. of timesteps needed to slow down from a given speed (for leg and torso)
