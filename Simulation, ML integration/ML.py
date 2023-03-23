@@ -7,10 +7,10 @@ stable_baselines3 can then use the gym custom environment to
 run machine learning algorithms on, in this file PPO is used.
 
 Functions in this module:
-    - main() runs simulation without any machine learning, takes user inputs
-    - ppo_main() runs basic simulation
+    - run_simulation() runs simulation without any machine learning, takes user inputs
+    - train_PPO() trains an model on the simulation 
     - run_learned() runs finished policy model in the simulation
-    - continue_learning() loads given file and continues PPO learning
+    - continue_learning() loads policy file and continues PPO learning
     - long_term_learning() runs continue_learning() until time limit passed
     - hyperparameter_tests() tests a list of input hyperparameters
 """
