@@ -270,9 +270,11 @@ def setup_simulation():
         # limit on swing joint to make the system comparable to the real world system
         "limit": RotaryLimitJoint(bodies["rod"].body, bodies["swing"].body, -np.pi/3 -setup["phi"], np.pi/3 -setup["phi"], pm_space),
 
-        # damping on the top joint (tip) and swing joint (tap), only damping argument relevant
-        "tip": Dampedrotaryspring(background, bodies["rod"].body, 0, 0, 1922, pm_space),
-        "tap": Dampedrotaryspring(bodies["rod"].body, bodies["swing"].body, 0, 0, -92.82, pm_space)
+        # damping on the top joint (tip) and swing joint (tap), only damping argument relevant, dependent on the step length (line 157)
+        # for 1/10 - tip damping = 1922, tap damping =  -92.82
+        # for 1/100 - tip damping = 2266.5, tap damping = 35.4
+        "tip": Dampedrotaryspring(background, bodies["rod"].body, 0, 0, 2266.5, pm_space),
+        "tap": Dampedrotaryspring(bodies["rod"].body, bodies["swing"].body, 0, 0, 35.4, pm_space)
     }
 
     motors = {
