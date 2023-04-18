@@ -1,0 +1,3 @@
+These two files contain the code to find the damping and, more importantly, 
+code that collects the angular data of the seat and the swing as the
+simulation is run and plots it - this is very useful code
